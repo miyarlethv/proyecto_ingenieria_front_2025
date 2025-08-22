@@ -78,10 +78,10 @@ function RegistroFormulario() {
   const volverInicio = () => navigate("/");
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#008658] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#EEEEEE] px-4">
       <button
         onClick={volverInicio}
-        className="absolute top-4 right-4 bg-white text-black border border-black px-4 py-2 rounded-xl font-medium hover:bg-gray-100 transition shadow"
+        className="absolute top-4 right-4 bg-[#008658] text-white border border-[#008658] px-4 py-2 rounded-xl font-medium hover:bg-[#006f49] transition shadow"
       >
         Volver
       </button>

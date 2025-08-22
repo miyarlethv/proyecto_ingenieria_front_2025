@@ -31,12 +31,6 @@ function Index() {
         </div>
         <nav className="flex gap-2">
           <button
-            onClick={handleContactClick}
-            className="bg-white text-black border border-black rounded px-2 py-1 hover:bg-gray-100 transition"
-          >
-            Contactos
-          </button>
-          <button
             onClick={handleRegistroClick}
             className="bg-white text-black border border-black rounded px-2 py-1 hover:bg-gray-100 transition"
           >
