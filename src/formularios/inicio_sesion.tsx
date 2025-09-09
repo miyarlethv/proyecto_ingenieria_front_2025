@@ -31,22 +31,27 @@ function Login() {
     navigate("/");
   };
 
+  const recuperarContraseña = () => {
+    // Aquí puedes redirigir a una ruta de recuperación
+    navigate("/recuperar-contraseña");
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#008658] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#FFFFF] px-4">
       {/* Botón Volver */}
       <button
         onClick={volverInicio}
-       className="absolute top-4 right-4 bg-[#ffffff] text-black border border-[#000000] px-4 py-2 rounded-xl font-medium hover:bg-gray-100 transition shadow"
+        className="absolute top-4 right-4 bg-[#ffffff] text-black border border-[#000000] px-4 py-2 rounded-xl font-medium hover:bg-gray-100 transition shadow"
       >
         Volver
       </button>
 
-      {/* Formulario con fondo verde degradado y translúcido */}
+      {/* Formulario */}
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm bg-gradient-to-br from-[#ffffff] to-[#ffffff] backdrop-blur-md text-black rounded-2xl shadow-2xl p-8 space-y-6"
       >
-       <div className="flex justify-center">
+        <div className="flex justify-center">
           <button
             onClick={volverInicio}
             className="focus:outline-none"
@@ -61,7 +66,6 @@ function Login() {
           </button>
         </div>
 
-
         <p className="text-center text-lg font-medium text-black tracking-wide">
           Bienvenido. Ingresa tus credenciales
         </p>
@@ -71,7 +75,6 @@ function Login() {
           name="email"
           placeholder="Usuario"
           className="w-full px-4 py-2 rounded-xl bg-white border border-[#008658] placeholder-black text-black focus:outline-none focus:ring-2 focus:ring-[#008658] shadow-sm"
-
           onChange={handleChange}
           value={loginData.email}
           required
@@ -90,9 +93,20 @@ function Login() {
           <button
             type="button"
             onClick={togglePasswordVisibility}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-white hover:text-gray-100"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-[#008658] hover:text-[#006f49]"
           >
             {verContraseña ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+
+        {/* Enlace recuperar contraseña */}
+        <div className="text-right">
+          <button
+            type="button"
+            onClick={recuperarContraseña}
+            className="text-sm text-[#008658] hover:underline"
+          >
+            ¿Olvidaste tu contraseña?
           </button>
         </div>
 
