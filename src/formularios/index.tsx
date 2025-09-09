@@ -13,10 +13,6 @@ function Index() {
     navigate("/registro");
   };
 
-  const handleContactClick = () => {
-    navigate("/contacto");
-  };
-
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
