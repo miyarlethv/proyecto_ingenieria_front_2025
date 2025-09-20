@@ -1,29 +1,134 @@
-// src/components/Bienvenida.tsx
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
-function BienvenidaUsuario() {
-  const navigate = useNavigate();
+function BienvenidoUsuario() {
   const location = useLocation();
+  const nombreUsuario = location.state?.nombre || "Usuario";
 
-  // Obtener datos del usuario desde el state que se envió al navegar
-  const usuario = location.state?.usuario || "Usuario";
+  // Estado para mascotas
+  const [mascotas, setMascotas] = useState<any[]>([]);
 
-  const volverInicio = () => {
-    navigate("/");
-  };
+  // Estado búsqueda
+  const [busqueda, setBusqueda] = useState<string>("");
+
+  // Estado para modal "Ver más"
+  const [mascotaSeleccionada, setMascotaSeleccionada] = useState<any | null>(null);
+
+  // Cargar mascotas desde la API
+  useEffect(() => {
+    const fetchMascotas = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/mascotas");
+        if (response.ok) {
+          const data = await response.json();
+          setMascotas(data);
+        }
+      } catch (error) {
+        console.error("Error cargando mascotas:", error);
+      }
+    };
+
+    fetchMascotas();
+  }, []);
+
+  // Filtrar mascotas por nombre
+  const filtroMascotas = mascotas.filter((mascota) =>
+    mascota.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-300 to-purple-500 px-4 text-white">
-      <h1 className="text-3xl font-bold mb-6">Hola, bienvenido {usuario} 👋</h1>
-      <p className="mb-6 text-lg text-white/90">¡Nos alegra tenerte de vuelta!</p>
-      <button
-        onClick={volverInicio}
-        className="px-6 py-2 bg-white text-purple-600 rounded-md font-semibold hover:bg-purple-100 transition"
-      >
-        Volver al inicio
-      </button>
+    <div className="min-h-screen bg-white">
+      {/* Header con nombre del usuario */}
+      <header className="bg-[#008658] flex items-center justify-between p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-gray-200" />
+          <h1 className="text-lg font-bold text-white">
+            Bienvenido Usuario ({nombreUsuario})
+          </h1>
+        </div>
+      </header>
+
+      {/* Buscador */}
+      <div className="flex justify-center max-w-6xl mx-auto px-4 mt-8 mb-6">
+        <input
+          type="text"
+          placeholder="🔍 Buscar mascota..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className="border border-black px-4 py-2 rounded-lg w-1/3"
+        />
+      </div>
+
+      {/* Modal Ver más */}
+      {mascotaSeleccionada && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg p-6 w-96 text-center shadow-lg relative">
+            <button
+              onClick={() => setMascotaSeleccionada(null)}
+              className="absolute top-2 right-2 text-gray-600 hover:text-black"
+            >
+              ✖
+            </button>
+            {mascotaSeleccionada.foto && (
+              <img
+                src={`http://127.0.0.1:8000/storage/${mascotaSeleccionada.foto}`}
+                alt={mascotaSeleccionada.nombre}
+                className="w-32 h-32 object-cover mx-auto rounded-full mb-4"
+              />
+            )}
+            <h2 className="text-xl font-bold">{mascotaSeleccionada.nombre}</h2>
+            <p className="text-gray-700 mt-2">Edad: {mascotaSeleccionada.edad}</p>
+            <p className="text-gray-700 mt-2">
+              Características:{" "}
+              {mascotaSeleccionada.caracteristicas || "No registradas"}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Lista de mascotas */}
+      <section className="pb-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          {filtroMascotas.length > 0 ? (
+            filtroMascotas.map((mascota) => (
+              <div
+                key={mascota.id}
+                className="flex flex-col items-center border border-gray-300 rounded-lg p-4 shadow-sm"
+              >
+                {mascota.foto ? (
+                  <img
+                    src={`http://127.0.0.1:8000/storage/${mascota.foto}`}
+                    alt={mascota.nombre}
+                    className="w-24 h-24 object-cover mb-3 rounded-full"
+                  />
+                ) : (
+                  <div className="w-24 h-24 bg-gray-200 mb-3 rounded-full" />
+                )}
+                <div className="text-center w-full">
+                  <p className="border border-black px-2 py-1 mb-1 text-sm font-semibold rounded">
+                    {mascota.nombre}
+                  </p>
+                  <p className="border border-black px-2 py-1 mb-2 text-sm rounded">
+                    {mascota.edad}
+                  </p>
+                  <button
+                    onClick={() => setMascotaSeleccionada(mascota)}
+                    className="border border-black px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full"
+                  >
+                    Ver más..
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="col-span-full text-center text-gray-500">
+              No se encontraron resultados ❌
+            </p>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
 
-export default BienvenidaUsuario;
+export default BienvenidoUsuario;
