@@ -5,6 +5,8 @@ import RegistroFormulario from './formularios/registros'
 import Index from './formularios/index';
 import BienvenidaUsuario from './formularios/bienvenidaUsuario';
 import BienvenidaFundacion from './formularios/bienvenidaFundacion';
+import RecuperarContraseña from './formularios/RecuperarContraseña';
+
 
 function App() {
   return (
@@ -15,6 +17,7 @@ function App() {
         <Route path="/" element={<Index />} />
         <Route path="/bienvenidaUsuario" element={<BienvenidaUsuario />} />
         <Route path="/bienvenidaFundacion" element={<BienvenidaFundacion />} />
+        <Route path="/recuperar-contraseña" element={<RecuperarContraseña />} />
       </Routes>
     </Router>
   );
