@@ -13,7 +13,6 @@ function Index() {
     navigate("/registro");
   };
 
-
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}

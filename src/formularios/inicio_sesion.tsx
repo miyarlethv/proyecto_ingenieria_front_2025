@@ -37,11 +37,12 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FFFFF] px-4">
+
+    <div className="min-h-screen flex items-center justify-center bg-[#EEEEEE] px-4">
       {/* Botón Volver */}
       <button
         onClick={volverInicio}
-        className="absolute top-4 right-4 bg-[#ffffff] text-black border border-[#000000] px-4 py-2 rounded-xl font-medium hover:bg-gray-100 transition shadow"
+       className="absolute top-4 right-4 bg-[#008658] text-white border border-[#008658] px-4 py-2 rounded-xl font-medium hover:bg-[#006f49] transition shadow"
       >
         Volver
       </button>
