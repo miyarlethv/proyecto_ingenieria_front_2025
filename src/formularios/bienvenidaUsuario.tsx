@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { Search,X } from "lucide-react";
 
 function BienvenidoUsuario() {
   const location = useLocation();
@@ -49,14 +50,17 @@ function BienvenidoUsuario() {
       </header>
 
       {/* Buscador */}
-      <div className="flex justify-center max-w-6xl mx-auto px-4 mt-8 mb-6">
-        <input
-          type="text"
-          placeholder="🔍 Buscar mascota..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          className="border border-black px-4 py-2 rounded-lg w-1/3"
-        />
+        <div className="flex justify-between items-center max-w-7xl mx-auto px-4 mt-8 mb-6">
+        <div className="relative w-1/3">
+          <Search className="absolute inset-y-0 left-3 my-auto text-gray-400" size={20} />
+          <input
+            type="text"
+            placeholder="Buscar mascota..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-green-600 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-green-600"
+          />
+        </div>
       </div>
 
       {/* Modal Ver más */}
@@ -67,7 +71,7 @@ function BienvenidoUsuario() {
               onClick={() => setMascotaSeleccionada(null)}
               className="absolute top-2 right-2 text-gray-600 hover:text-black"
             >
-              ✖
+             <X size={20} />
             </button>
             {mascotaSeleccionada.foto && (
               <img
@@ -77,8 +81,8 @@ function BienvenidoUsuario() {
               />
             )}
             <h2 className="text-xl font-bold">{mascotaSeleccionada.nombre}</h2>
-            <p className="text-gray-700 mt-2">Edad: {mascotaSeleccionada.edad}</p>
-            <p className="text-gray-700 mt-2">
+            <p className="text-black-700 mt-2">Edad: {mascotaSeleccionada.edad}</p>
+            <p className="text-black-700 mt-2">
               Características:{" "}
               {mascotaSeleccionada.caracteristicas || "No registradas"}
             </p>
@@ -105,15 +109,17 @@ function BienvenidoUsuario() {
                   <div className="w-24 h-24 bg-gray-200 mb-3 rounded-full" />
                 )}
                 <div className="text-center w-full">
-                  <p className="border border-black px-2 py-1 mb-1 text-sm font-semibold rounded">
+                  <p className="text-xs text-black font-medium">Nombre</p>
+                  <p className="border border-green-600 px-2 py-1 mb-1 text-sm  rounded">
                     {mascota.nombre}
                   </p>
-                  <p className="border border-black px-2 py-1 mb-2 text-sm rounded">
+                  <p className="text-xs text-black font-medium">Edad</p>
+                  <p className="border border-green-600 px-2 py-1 mb-2 text-sm rounded">
                     {mascota.edad}
                   </p>
                   <button
                     onClick={() => setMascotaSeleccionada(mascota)}
-                    className="border border-black px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full"
+                    className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full"
                   >
                     Ver más..
                   </button>
