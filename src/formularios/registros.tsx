@@ -28,6 +28,9 @@ function RegistroFormulario() {
     password: "",
   });
 
+  const [mensaje, setMensaje] = useState<string | null>(null);   // ✅ Estado para mostrar confirmación
+  const [tipoMensaje, setTipoMensaje] = useState<"exito" | "error">("exito");
+
   const navigate = useNavigate();
 
   const togglePasswordVisibility = () => setVerContraseña(prev => !prev);
@@ -70,15 +73,19 @@ function RegistroFormulario() {
       }
 
       console.log("Respuesta del backend:", respuesta);
+      setTipoMensaje("exito");
+      setMensaje("✅ Registro exitoso");
     } catch (error) {
       console.error("Error al enviar los datos:", error);
+      setTipoMensaje("error");
+      setMensaje("❌ Ocurrió un error al registrar. Intenta nuevamente.");
     }
   };
 
   const volverInicio = () => navigate("/");
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#EEEEEE] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#EEEEEE] px-4 relative">
       <button
         onClick={volverInicio}
         className="absolute top-4 right-4 bg-[#008658] text-white border border-[#008658] px-4 py-2 rounded-xl font-medium hover:bg-[#006f49] transition shadow"
@@ -199,6 +206,23 @@ function RegistroFormulario() {
           Registrar
         </button>
       </form>
+
+      {/* ✅ Modal de confirmación/error */}
+      {mensaje && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-2xl shadow-lg text-center space-y-4 w-80">
+            <p className={tipoMensaje === "exito" ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+              {mensaje}
+            </p>
+            <button
+              onClick={() => setMensaje(null)}
+              className="bg-[#008658] text-white px-4 py-2 rounded-lg hover:bg-[#006f49] transition"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
