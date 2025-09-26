@@ -168,8 +168,10 @@ function BienvenidaFundacion() {
     if (!confirmEliminar) return;
     setIsProcessing(true);
     try {
-      const url = `http://127.0.0.1:8000/api/mascotas/${confirmEliminar.id}`;
-      const res = await fetch(url, { method: "DELETE" });
+      const url = `http://127.0.0.1:8000/api/EliminarMascotas`;
+      const formData = new FormData();
+      formData.append("id", confirmEliminar.id);
+      const res = await fetch(url, { method: "POST", body: formData });
       if (res.ok || res.status === 204) {
         setMascotas((prev) =>
           prev.filter((m) => String(m.id) !== String(confirmEliminar.id))
