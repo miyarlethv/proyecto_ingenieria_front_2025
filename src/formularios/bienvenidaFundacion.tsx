@@ -91,8 +91,9 @@ function BienvenidaFundacion() {
     try {
       if (editandoMascota) {
         // === actualizar ===
-        const url = `http://127.0.0.1:8000/api/mascotas/${editandoMascota.id}`;
+        const url = 'http://127.0.0.1:8000/api/ActualizarMascotas';
         const formData = new FormData();
+        formData.append("id", editandoMascota.id); // Enviar el ID como parte del formData
         formData.append("nombre", nombre);
         formData.append("edad", edad);
         formData.append("caracteristicas", caracteristicas);
@@ -115,7 +116,7 @@ function BienvenidaFundacion() {
         }
       } else {
         // === crear ===
-        const url = `http://127.0.0.1:8000/api/mascotas`;
+        const url = `http://127.0.0.1:8000/api/CrearMascotas`;
         const formData = new FormData();
         formData.append("nombre", nombre);
         formData.append("edad", edad);
@@ -322,7 +323,7 @@ function BienvenidaFundacion() {
           <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg text-center">
             <CheckCircle2 size={48} className="text-green-600 mx-auto mb-3" />
             <h3 className="text-lg font-semibold mb-2">¡Éxito!</h3>
-            <p className="mb-4">La mascota se ha guardado/actualizado correctamente.</p>
+            <p className="mb-4">La mascota se ha guardado/Actualizado correctamente.</p>
             <button
               onClick={() => setMostrarModalExito(false)}
               className="bg-[#008658] text-white px-4 py-2 rounded"
