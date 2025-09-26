@@ -31,6 +31,16 @@ function RegistroFormulario() {
   const [mensaje, setMensaje] = useState<string | null>(null);   // ✅ Estado para mostrar confirmación
   const [tipoMensaje, setTipoMensaje] = useState<"exito" | "error">("exito");
 
+  // Estado inicial para resetear el formulario
+  const initialFormData: Formulario = {
+    nombre: "",
+    nit: "",
+    telefono: "",
+    email: "",
+    direccion: "",
+    password: "",
+  };
+
   const navigate = useNavigate();
 
   const togglePasswordVisibility = () => setVerContraseña(prev => !prev);
@@ -75,10 +85,19 @@ function RegistroFormulario() {
       console.log("Respuesta del backend:", respuesta);
       setTipoMensaje("exito");
       setMensaje("✅ Registro exitoso");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al enviar los datos:", error);
+      let mensajeError = "❌ Ocurrió un error al registrar. Intenta nuevamente.";
+      // Si el backend devuelve un mensaje específico, lo mostramos
+      if (error.response && error.response.data) {
+        if (error.response.data.message) {
+          mensajeError = `❌ ${error.response.data.message}`;
+        } else if (typeof error.response.data === 'string') {
+          mensajeError = `❌ ${error.response.data}`;
+        }
+      }
       setTipoMensaje("error");
-      setMensaje("❌ Ocurrió un error al registrar. Intenta nuevamente.");
+      setMensaje(mensajeError);
     }
   };
 
@@ -209,14 +228,36 @@ function RegistroFormulario() {
 
       {/* ✅ Modal de confirmación/error */}
       {mensaje && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-2xl shadow-lg text-center space-y-4 w-80">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-lg text-center space-y-4 w-80 relative">
+            {/* Botón X para cerrar y vaciar el formulario */}
+            <button
+              onClick={() => {
+                setMensaje(null);
+                if (tipoMensaje === "exito") {
+                  setFormData({ ...initialFormData });
+                }
+                // Si es error, solo cierra el modal, no limpia datos
+              }}
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl font-bold"
+              aria-label="Cerrar"
+              type="button"
+            >
+              ×
+            </button>
             <p className={tipoMensaje === "exito" ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
               {mensaje}
             </p>
             <button
-              onClick={() => setMensaje(null)}
+              onClick={() => {
+                setMensaje(null);
+                if (tipoMensaje === "exito") {
+                  navigate("/login");
+                }
+                // Si es error, solo cierra el modal
+              }}
               className="bg-[#008658] text-white px-4 py-2 rounded-lg hover:bg-[#006f49] transition"
+              type="button"
             >
               Cerrar
             </button>

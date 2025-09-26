@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Search,X } from "lucide-react";
 
 function BienvenidoUsuario() {
@@ -14,6 +14,11 @@ function BienvenidoUsuario() {
 
   // Estado para modal "Ver más"
   const [mascotaSeleccionada, setMascotaSeleccionada] = useState<any | null>(null);
+
+   const navigate = useNavigate();
+   const manejarVolver = () => {
+    navigate("/");
+  };
 
   // Cargar mascotas desde la API
   useEffect(() => {
@@ -47,6 +52,12 @@ function BienvenidoUsuario() {
             Bienvenido Usuario ({nombreUsuario})
           </h1>
         </div>
+         <button
+          onClick={manejarVolver}
+          className="bg-white text-black border border-black rounded-[10px] px-4 py-1 hover:bg-gray-100 transition"
+        >
+          Volver
+        </button>
       </header>
 
       {/* Buscador */}
