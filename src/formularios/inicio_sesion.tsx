@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "../index.css";
+import loginService from "./loginService";
 
 function Login() {
   const [verContraseña, setVerContraseña] = useState(false);
@@ -22,10 +23,38 @@ function Login() {
     setLoginData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Datos del login:", loginData);
-  };
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  console.log("Datos del login:", loginData);
+
+  try {
+    const response = await loginService.login(loginData);
+    console.log("Respuesta del login:", response.data);
+
+    // Guardar token
+    if (response.data.token) {
+      localStorage.setItem("token", response.data.token);
+    }
+
+    // Guardar tipo
+    if (response.data.tipo) {
+      localStorage.setItem("tipo", response.data.tipo);
+    }
+
+    // Redirigir según el tipo de usuario y pasar el nombre
+    if (response.data.tipo === "usuario") {
+      navigate("/bienvenidaUsuario", { state: { nombre: response.data.nombre } });
+    } else if (response.data.tipo === "fundacion") {
+      navigate("/bienvenidaFundacion", { state: { nombre: response.data.nombre } });
+    } else {
+      navigate("/"); // fallback
+    }
+  } catch (error: any) {
+    console.error("Error en login:", error.response?.data || error.message);
+    alert("Credenciales incorrectas o error en el servidor");
+  }
+};
+
 
   const volverInicio = () => {
     navigate("/");
