@@ -1,12 +1,11 @@
 // imports
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Search, PlusCircle, Pencil, Trash2, CheckCircle2, X } from "lucide-react";
 
 function BienvenidaFundacion() {
   const navigate = useNavigate();
-  const location = useLocation();
-
+  
   // Estados de la UI
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [mostrarModalExito, setMostrarModalExito] = useState(false);
@@ -26,7 +25,7 @@ function BienvenidaFundacion() {
   const [caracteristicas, setCaracteristicas] = useState<string>("");
   const [foto, setFoto] = useState<File | null>(null);
 
-  const nombreFundacion = location.state?.nombre || "Fundación";
+  
   const [busqueda, setBusqueda] = useState<string>("");
 
   // Botón Volver
@@ -39,7 +38,7 @@ function BienvenidaFundacion() {
       setCaracteristicas("");
       setFoto(null);
     } else {
-      navigate("/");
+      navigate("/dashboard");
     }
   };
 
@@ -165,45 +164,29 @@ function BienvenidaFundacion() {
   };
 
   const confirmarEliminarMascota = async () => {
-    if (!confirmEliminar) return;
-    setIsProcessing(true);
-    try {
-      const url = `http://127.0.0.1:8000/api/EliminarMascotas`;
-      const formData = new FormData();
-      formData.append("id", confirmEliminar.id);
-      const res = await fetch(url, { method: "POST", body: formData });
-      if (res.ok || res.status === 204) {
-        setMascotas((prev) =>
-          prev.filter((m) => String(m.id) !== String(confirmEliminar.id))
-        );
-        setConfirmEliminar(null);
-      } else {
-        alert("No se pudo eliminar la mascota");
-      }
-    } catch (err) {
-      alert("Error de conexión al eliminar");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+  setIsProcessing(true);
+  try {
+    await fetch("http://127.0.0.1:8000/api/EliminarMascotas", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: confirmEliminar.id }),
+    });
+
+    // 🔹 Actualiza el estado local para quitar la mascota de la vista
+    setMascotas((prev) => prev.filter((m) => m.id !== confirmEliminar.id));
+
+    setConfirmEliminar(null);
+  } catch (error) {
+    console.error("Error al deshabilitar la mascota:", error);
+  } finally {
+    setIsProcessing(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-[#008658] flex items-center justify-between p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gray-200" />
-          <h1 className="text-lg font-bold text-white">
-            Bienvenido Fundación ({nombreFundacion})
-          </h1>
-        </div>
-        <button
-          onClick={manejarVolver}
-          className="bg-white text-black border border-black rounded-[10px] px-4 py-1 hover:bg-gray-100 transition"
-        >
-          Volver
-        </button>
-      </header>
 
       {/* Barra búsqueda + Agregar */}
       <div className="flex justify-between items-center max-w-7xl mx-auto px-4 mt-8 mb-6">
@@ -217,13 +200,21 @@ function BienvenidaFundacion() {
             className="w-full pl-10 pr-4 py-2 border border-green-600 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-green-600"
           />
         </div>
-        <button
-          onClick={abrirAgregar}
-          className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
-        >
-          <PlusCircle size={22} className="text-white" />
-          <span>Agregar mascota</span>
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={abrirAgregar}
+            className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
+          >
+            <PlusCircle size={22} className="text-white" />
+            <span>Agregar mascota</span>
+          </button>
+          <button
+            onClick={manejarVolver}
+            className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
+          >
+            Volver
+          </button>
+        </div>
       </div>
 
       {/* Modal Formulario */}
@@ -241,7 +232,7 @@ function BienvenidaFundacion() {
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Nombre de la mascota"
-                className="border border-gray-400 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
+                className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2"
                 required
               />
               {/* Edad */}
@@ -250,8 +241,8 @@ function BienvenidaFundacion() {
                 type="text"
                 value={edad}
                 onChange={(e) => setEdad(e.target.value)}
-                placeholder="Edad de la mascota"
-                className="border border-gray-400 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
+                placeholder="Edad de la mascotaborder"
+                className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2"
                 required
               />
               {/* Características */}
@@ -261,7 +252,7 @@ function BienvenidaFundacion() {
                 value={caracteristicas}
                 onChange={(e) => setCaracteristicas(e.target.value)}
                 placeholder="Características"
-                className="border border-gray-400 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
+                className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2"
               />
               {/* Foto */}
               <input
@@ -269,7 +260,7 @@ function BienvenidaFundacion() {
                 type="file"
                 accept=".jpg,.jpeg,.png"
                 onChange={manejarCambioArchivo}
-                className="border border-gray-400 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
+                className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2"
               />
               <div className="flex justify-end gap-3 mt-4">
                 <button
@@ -374,9 +365,9 @@ function BienvenidaFundacion() {
               )}
               <div className="text-center w-full">
                 <p className="text-xs text-black font-medium">Nombre</p>
-                <p className="border border-green-600 px-2 py-1 text-sm rounded mb-2">{mascota.nombre}</p>
+                <p className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">{mascota.nombre}</p>
                 <p className="text-xs text-black font-medium">Edad</p>
-                <p className="border border-green-600 px-2 py-1 text-sm rounded mb-2">{mascota.edad}</p>
+                <p className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">{mascota.edad}</p>
                 <button onClick={() => setMascotaSeleccionada(mascota)} className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">
                   Ver más..
                 </button>
