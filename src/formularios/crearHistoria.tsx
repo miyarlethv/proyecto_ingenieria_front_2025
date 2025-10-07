@@ -1,62 +1,73 @@
-import React, { useState} from "react";
+import React, { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { CheckCircle2 } from "lucide-react"; // Asegúrate de tener instalado lucide-react
 
 const CrearHistoria: React.FC = () => {
+  // 🔹 Estados
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     fecha: "",
     descripcion: "",
     tipo: "",
   });
+  const [error, setError] = useState(""); // Mensaje de error
+  const [mostrarModalExito, setMostrarModalExito] = useState(false); // Modal de éxito
 
   const navigate = useNavigate();
-  const { mascotaId } = useParams(); // Se usa para saber a qué mascota pertenece la historia
+  const { mascotaId } = useParams();
 
-  // 🔹 Función para abrir y cerrar modal
+  // 🔹 Funciones para abrir y cerrar modal
   const abrirModal = () => setIsModalOpen(true);
-  const cerrarModal = () => setIsModalOpen(false);
+  const cerrarModal = () => {
+    setIsModalOpen(false);
+    setError(""); // Limpiar error al cerrar
+  };
 
   // 🔹 Manejador de cambios de los inputs
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 🔹 Enviar formulario (guardar en la BD)
+  // 🔹 Enviar formulario
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    setError("");
 
-    const dataAEnviar = {
-      mascota_id: mascotaId, // el id de la mascota
-      ...formData,
-    };
+    const dataAEnviar = { mascota_id: mascotaId, ...formData };
 
     fetch("http://127.0.0.1:8000/api/CrearHistoriaClinica", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(dataAEnviar),
     })
-      .then((res) => res.json())
-      .then((data) => {
-        alert("Historia clínica guardada correctamente 🩺");
-        console.log("Respuesta del backend:", data);
-        cerrarModal();
+      .then((res) => {
+        if (!res.ok) throw new Error("No se pudo guardar la historia clínica");
+        return res.json();
       })
-      .catch((error) => console.error("Error al guardar:", error));
+      .then((data) => {
+        console.log("Respuesta del backend:", data);
+        setFormData({ fecha: "", descripcion: "", tipo: "" }); // Limpiar form
+        cerrarModal();
+        setMostrarModalExito(true); // Mostrar modal de éxito
+      })
+      .catch((error) => {
+        console.error("Error al guardar:", error);
+        setError(
+          "❌ Ocurrió un error al guardar la historia clínica. Intenta de nuevo."
+        );
+      });
   };
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen flex justify-center items-start">
+      {/* Contenedor principal */}
       <div className="bg-white shadow-lg rounded-2xl p-6 w-full max-w-5xl border border-gray-200">
         {/* Encabezado */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Historia clínica</h1>
-
           <div className="flex gap-4">
             <button
               onClick={() => navigate("/HistoriaClinica")}
@@ -64,7 +75,6 @@ const CrearHistoria: React.FC = () => {
             >
               Volver
             </button>
-
             <button
               onClick={abrirModal}
               className="bg-[#008658] text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
@@ -74,13 +84,13 @@ const CrearHistoria: React.FC = () => {
           </div>
         </div>
 
-        {/* Contenedor principal */}
+        {/* Contenedor de historias */}
         <div className="border-2 border-gray-300 rounded-xl h-64 p-4">
-          {/* Aquí puedes mostrar una lista de historias si luego las cargas */}
+          {/* Aquí se podrían listar las historias */}
         </div>
       </div>
 
-      {/* 🟩 Modal */}
+      {/* 🟩 Modal para crear historia */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
           <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg">
@@ -89,11 +99,16 @@ const CrearHistoria: React.FC = () => {
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Error */}
+              {error && (
+                <div className="bg-red-100 text-red-700 p-2 rounded-md mb-2 text-center">
+                  {error}
+                </div>
+              )}
+
               {/* Fecha */}
               <div>
-                <label className="block font-medium text-gray-700 mb-1">
-                  Fecha
-                </label>
+                <label className="block font-medium text-gray-700 mb-1">Fecha</label>
                 <input
                   type="date"
                   name="fecha"
@@ -106,9 +121,7 @@ const CrearHistoria: React.FC = () => {
 
               {/* Descripción */}
               <div>
-                <label className="block font-medium text-gray-700 mb-1">
-                  Descripción
-                </label>
+                <label className="block font-medium text-gray-700 mb-1">Descripción</label>
                 <textarea
                   name="descripcion"
                   value={formData.descripcion}
@@ -117,7 +130,7 @@ const CrearHistoria: React.FC = () => {
                   placeholder="Describe el procedimiento o revisión realizada..."
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-green-200"
                   required
-                ></textarea>
+                />
               </div>
 
               {/* Tipo */}
@@ -160,6 +173,25 @@ const CrearHistoria: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 🟢 Modal de éxito */}
+      {mostrarModalExito && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg text-center">
+            <CheckCircle2 size={48} className="text-green-600 mx-auto mb-3" />
+            <h3 className="text-lg font-semibold mb-2">¡Éxito!</h3>
+            <p className="mb-4">
+              La historia clínica se ha registrado correctamente.
+            </p>
+            <button
+              onClick={() => setMostrarModalExito(false)}
+              className="bg-[#008658] text-white px-4 py-2 rounded"
+            >
+              Aceptar
+            </button>
           </div>
         </div>
       )}

@@ -25,7 +25,7 @@ function Dashboard() {
       icono: <Home size={22} className="text-white" />,
       subOpciones: [
         { nombre: "Registro de mascotas", ruta: "/BienvenidaFundacion", icono: <Dog size={20} className="text-white" /> },
-        { nombre: "Agregar historia clínica", ruta: "/B", icono: <NotebookPen size={20} className="text-white" /> },
+        { nombre: "Agregar historia clínica", ruta: "/HistoriaClinica", icono: <NotebookPen size={20} className="text-white" /> },
       ],
     },
     {

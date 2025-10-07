@@ -310,22 +310,22 @@ function BienvenidaFundacion() {
         </div>
       )}
 
-      {/* Modal Exito */}
-      {mostrarModalExito && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg text-center">
-            <CheckCircle2 size={48} className="text-green-600 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold mb-2">¡Éxito!</h3>
-            <p className="mb-4">La mascota se ha guardado/Actualizado correctamente.</p>
-            <button
-              onClick={() => setMostrarModalExito(false)}
-              className="bg-[#008658] text-white px-4 py-2 rounded"
-            >
-              Aceptar
-            </button>
+        {/* Modal Exito */}
+        {mostrarModalExito && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg text-center">
+              <CheckCircle2 size={48} className="text-green-600 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold mb-2">¡Éxito!</h3>
+              <p className="mb-4">La mascota se ha guardado/Actualizado correctamente.</p>
+              <button
+                onClick={() => setMostrarModalExito(false)}
+                className="bg-[#008658] text-white px-4 py-2 rounded"
+              >
+                Aceptar
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Modal Ver más */}
       {mascotaSeleccionada && (
