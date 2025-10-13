@@ -28,10 +28,9 @@ function RegistroFormulario() {
     password: "",
   });
 
-  const [mensaje, setMensaje] = useState<string | null>(null);   // ✅ Estado para mostrar confirmación
+  const [mensaje, setMensaje] = useState<string | null>(null);
   const [tipoMensaje, setTipoMensaje] = useState<"exito" | "error">("exito");
 
-  // Estado inicial para resetear el formulario
   const initialFormData: Formulario = {
     nombre: "",
     nit: "",
@@ -45,8 +44,20 @@ function RegistroFormulario() {
 
   const togglePasswordVisibility = () => setVerContraseña(prev => !prev);
 
+  // ✅ Validaciones en tiempo real
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+
+    if (["telefono", "nit"].includes(name)) {
+      // Solo números y máximo 10 dígitos
+      if (!/^\d{0,10}$/.test(value)) return;
+    }
+
+    if (name === "email") {
+      setFormData(prev => ({ ...prev, [name]: value.trim() }));
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -61,8 +72,39 @@ function RegistroFormulario() {
     setFormularioElegido(value);
   };
 
+  // ✅ Validaciones antes del envío
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.nombre.trim() ||
+        !formData.nit.trim() ||
+        !formData.telefono.trim() ||
+        !formData.email.trim() ||
+        !formData.direccion.trim() ||
+        !formData.password.trim()) {
+      setTipoMensaje("error");
+      setMensaje("Todos los campos son obligatorios.");
+      return;
+    }
+
+    if (formData.telefono.length > 10 || formData.nit.length > 10) {
+      setTipoMensaje("error");
+      setMensaje("El teléfono o la cédula/NIT no pueden tener más de 10 dígitos.");
+      return;
+    }
+
+    if (!formData.email.includes("@")) {
+      setTipoMensaje("error");
+      setMensaje("El correo debe ser funcional");
+      return;
+    }
+
+    if (formularioElegido === "fundacion" && !(formData.logo instanceof File)) {
+      setTipoMensaje("error");
+      setMensaje("Debes cargar una imagen para el logo de la fundación.");
+      return;
+    }
+
     try {
       let respuesta;
 
@@ -84,16 +126,15 @@ function RegistroFormulario() {
 
       console.log("Respuesta del backend:", respuesta);
       setTipoMensaje("exito");
-      setMensaje("✅ Registro exitoso");
+      setMensaje("Registro exitoso");
     } catch (error: any) {
       console.error("Error al enviar los datos:", error);
-      let mensajeError = "❌ Ocurrió un error al registrar. Intenta nuevamente.";
-      // Si el backend devuelve un mensaje específico, lo mostramos
+      let mensajeError = "Ocurrió un error al registrar. Intenta nuevamente.";
       if (error.response && error.response.data) {
         if (error.response.data.message) {
-          mensajeError = `❌ ${error.response.data.message}`;
+          mensajeError = ` ${error.response.data.message}`;
         } else if (typeof error.response.data === 'string') {
-          mensajeError = `❌ ${error.response.data}`;
+          mensajeError = ` ${error.response.data}`;
         }
       }
       setTipoMensaje("error");
@@ -214,6 +255,7 @@ function RegistroFormulario() {
               accept="image/*"
               onChange={handleFileChange}
               className="w-full px-4 py-2 rounded-xl bg-white border border-[#008658] text-black shadow-sm"
+              required
             />
           </>
         )}
@@ -221,23 +263,20 @@ function RegistroFormulario() {
         <button
           type="submit"
           className="w-full py-2 bg-[#008658] text-white font-semibold rounded-xl hover:bg-[#006f49] transition shadow"
-        >
-          Registrar
+      >
+        Registrarme
         </button>
       </form>
 
-      {/* ✅ Modal de confirmación/error */}
       {mensaje && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-2xl shadow-lg text-center space-y-4 w-80 relative">
-            {/* Botón X para cerrar y vaciar el formulario */}
             <button
               onClick={() => {
                 setMensaje(null);
                 if (tipoMensaje === "exito") {
                   setFormData({ ...initialFormData });
                 }
-                // Si es error, solo cierra el modal, no limpia datos
               }}
               className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl font-bold"
               aria-label="Cerrar"
@@ -254,7 +293,6 @@ function RegistroFormulario() {
                 if (tipoMensaje === "exito") {
                   navigate("/login");
                 }
-                // Si es error, solo cierra el modal
               }}
               className="bg-[#008658] text-white px-4 py-2 rounded-lg hover:bg-[#006f49] transition"
               type="button"
