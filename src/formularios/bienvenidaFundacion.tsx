@@ -301,7 +301,7 @@ function BienvenidaFundacion() {
               <button
                 onClick={confirmarEliminarMascota}
                 disabled={isProcessing}
-                className="bg-red-600 text-white px-4 py-2 rounded"
+                className="bg-[#008658] text-white px-4 py-2 rounded"
               >
                 {isProcessing ? "Eliminando..." : "Eliminar"}
               </button>
