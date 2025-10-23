@@ -16,14 +16,57 @@ const CrearHistoria: React.FC = () => {
   const [formData, setFormData] = useState({
     fecha: "",
     descripcion: "",
+    nombre_responsable: "",
+    telefono: "", // usaremos este campo para la edad
+    cargo: "",
     tipo: "",
   });
   const [editData, setEditData] = useState<any>(null);
   const [error, setError] = useState("");
   const [historias, setHistorias] = useState<any[]>([]);
+  const [roles, setRoles] = useState<Rol[]>([]);
+  const [mascotas, setMascotas] = useState<Mascota[]>([]);
 
   const navigate = useNavigate();
   const { mascotaId } = useParams();
+
+  // 🔹 Interfaces
+  interface Rol {
+    id: number;
+    nombre: string;
+  }
+
+  interface Mascota {
+    id: number;
+    nombre: string;
+    edad: string;
+  }
+
+  // 🔹 Cargar roles y mascotas
+  useEffect(() => {
+    const obtenerRoles = async () => {
+      try {
+        const respuesta = await fetch("http://127.0.0.1:8000/api/ListarRoles");
+        const data = await respuesta.json();
+        setRoles(data);
+      } catch (error) {
+        console.error("Error al obtener los roles:", error);
+      }
+    };
+
+    const obtenerMascotas = async () => {
+      try {
+        const respuesta = await fetch("http://127.0.0.1:8000/api/mascotas");
+        const data = await respuesta.json();
+        setMascotas(data);
+      } catch (error) {
+        console.error("Error al obtener las mascotas:", error);
+      }
+    };
+
+    obtenerRoles();
+    obtenerMascotas();
+  }, []);
 
   // 🔹 Abrir y cerrar modales
   const abrirModal = () => setIsModalOpen(true);
@@ -46,7 +89,19 @@ const CrearHistoria: React.FC = () => {
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // Si cambia el nombre de la mascota, traemos su edad automáticamente
+    if (name === "nombre_responsable") {
+      const mascotaSeleccionada = mascotas.find((m) => m.nombre === value);
+      setFormData({
+        ...formData,
+        nombre_responsable: value,
+        telefono: mascotaSeleccionada ? mascotaSeleccionada.edad : "",
+      });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleEditChange = (
@@ -72,7 +127,14 @@ const CrearHistoria: React.FC = () => {
         return res.json();
       })
       .then(() => {
-        setFormData({ fecha: "", descripcion: "", tipo: "" });
+        setFormData({
+          fecha: "",
+          descripcion: "",
+          nombre_responsable: "",
+          telefono: "",
+          cargo: "",
+          tipo: "",
+        });
         cerrarModal();
         setMostrarModalExito(true);
         cargarHistorias();
@@ -112,12 +174,11 @@ const CrearHistoria: React.FC = () => {
   const eliminarHistoria = () => {
     if (!modalConfirmacion.historiaId) return;
 
-        fetch("http://127.0.0.1:8000/api/EliminarHistoriaClinica", {
-      method: "PUT", // según tu nueva ruta
+    fetch("http://127.0.0.1:8000/api/EliminarHistoriaClinica", {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: modalConfirmacion.historiaId }),
     })
-
       .then((res) => {
         if (!res.ok) throw new Error("No se pudo eliminar");
         setModalConfirmacion({ tipo: null });
@@ -141,14 +202,11 @@ const CrearHistoria: React.FC = () => {
 
   // 🔹 Actualizar historia clínica
   const actualizarHistoria = () => {
-    
-        fetch("http://127.0.0.1:8000/api/ActualizarHistoriaClinica", {
+    fetch("http://127.0.0.1:8000/api/ActualizarHistoriaClinica", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editData), // debe incluir el id adentro
+      body: JSON.stringify(editData),
     })
-
-
       .then((res) => {
         if (!res.ok) throw new Error("Error al actualizar");
         cerrarEditModal();
@@ -193,16 +251,13 @@ const CrearHistoria: React.FC = () => {
                 >
                   <div>
                     <p className="text-sm text-gray-600">
-                      <span className="font-semibold">Fecha:</span>{" "}
-                      {historia.fecha}
+                      <span className="font-semibold">Fecha:</span> {historia.fecha}
                     </p>
                     <p className="text-sm text-gray-600">
-                      <span className="font-semibold">Tipo:</span>{" "}
-                      {historia.tipo}
+                      <span className="font-semibold">Tipo:</span> {historia.tipo}
                     </p>
                     <p className="text-sm text-gray-600">
-                      <span className="font-semibold">Descripción:</span>{" "}
-                      {historia.descripcion}
+                      <span className="font-semibold">Descripción:</span> {historia.descripcion}
                     </p>
                   </div>
                   <div className="flex gap-3">
@@ -239,6 +294,8 @@ const CrearHistoria: React.FC = () => {
           handleSubmit={handleSubmit}
           cerrarModal={cerrarModal}
           error={error}
+          roles={roles}
+          mascotas={mascotas}
         />
       )}
 
@@ -251,10 +308,12 @@ const CrearHistoria: React.FC = () => {
           handleSubmit={handleEditSubmit}
           cerrarModal={cerrarEditModal}
           error={error}
+          roles={roles}
+          mascotas={mascotas}
         />
       )}
 
-      {/* 🔔 Modal de confirmación (actualizar/eliminar) */}
+      {/* 🔔 Modal de confirmación */}
       {modalConfirmacion.tipo && (
         <ModalConfirmacion
           tipo={modalConfirmacion.tipo}
@@ -268,9 +327,7 @@ const CrearHistoria: React.FC = () => {
       )}
 
       {/* 🟢 Modal de éxito */}
-      {mostrarModalExito && (
-        <ModalExito cerrarModal={cerrarModalExito} />
-      )}
+      {mostrarModalExito && <ModalExito cerrarModal={cerrarModalExito} />}
     </div>
   );
 };
@@ -278,9 +335,8 @@ const CrearHistoria: React.FC = () => {
 export default CrearHistoria;
 
 /* ===========================
-   🔸 MODALES REUTILIZABLES
+   🔸 MODAL DE HISTORIA CLÍNICA
 =========================== */
-
 interface ModalProps {
   titulo: string;
   formData: any;
@@ -290,6 +346,8 @@ interface ModalProps {
   handleSubmit: (e: FormEvent) => void;
   cerrarModal: () => void;
   error: string;
+  roles: any[];
+  mascotas: any[];
 }
 
 const ModalHistoria: React.FC<ModalProps> = ({
@@ -299,6 +357,8 @@ const ModalHistoria: React.FC<ModalProps> = ({
   handleSubmit,
   cerrarModal,
   error,
+  roles,
+  mascotas,
 }) => (
   <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
     <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg">
@@ -331,6 +391,51 @@ const ModalHistoria: React.FC<ModalProps> = ({
           className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
           required
         />
+
+        {/* 🔹 Nombre de mascota */}
+        <label className="block font-medium text-gray-700 mb-1">
+          Nombre de mascota
+        </label>
+        <select
+          name="nombre_responsable"
+          value={formData.nombre_responsable}
+          onChange={handleChange}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
+          required
+        >
+          <option value="">Selecciona una mascota</option>
+          {mascotas.map((m) => (
+            <option key={m.id} value={m.nombre}>
+              {m.nombre}
+            </option>
+          ))}
+        </select>
+
+        {/* 🔹 Edad (rellenado automático) */}
+        <label className="block font-medium text-gray-700 mb-1">Edad</label>
+        <input
+          name="telefono"
+          value={formData.telefono}
+          onChange={handleChange}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
+          readOnly
+        />
+
+        <label className="block font-medium text-gray-700 mb-1">Cargo</label>
+        <select
+          name="cargo"
+          value={formData.cargo}
+          onChange={handleChange}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
+          required
+        >
+          <option value="">Selecciona un tipo</option>
+          {roles.map((rol) => (
+            <option key={rol.id} value={rol.nombre}>
+              {rol.nombre}
+            </option>
+          ))}
+        </select>
 
         <label className="block font-medium text-gray-700 mb-1">
           Tipo de procedimiento
@@ -372,55 +477,3 @@ const ModalHistoria: React.FC<ModalProps> = ({
   </div>
 );
 
-/* 🔹 Modal Confirmación */
-const ModalConfirmacion: React.FC<{
-  tipo: "eliminar" | "actualizar";
-  confirmar: () => void;
-  cancelar: () => void;
-}> = ({ tipo, confirmar, cancelar }) => (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-    <div className="bg-white rounded-lg p-6 w-full max-w-sm text-center shadow-lg">
-      <AlertTriangle size={48} className="text-yellow-500 mx-auto mb-3" />
-      <h3 className="text-lg font-semibold mb-2">
-        {tipo === "eliminar"
-          ? "¿Deseas eliminar esta historia clínica?"
-          : "¿Deseas actualizar esta historia clínica?"}
-      </h3>
-      <div className="flex justify-center gap-4 mt-4">
-        <button
-          onClick={confirmar}
-          className={`px-4 py-2 rounded ${
-            tipo === "eliminar" ? "bg-[#008658]" : "bg-[#008658]"
-          } text-white`}
-        >
-          Confirmar
-        </button>
-        <button
-          onClick={cancelar}
-          className="px-4 py-2 rounded border border-gray-400 text-gray-600 hover:bg-gray-100"
-        >
-          Cancelar
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
-/* 🟢 Modal Éxito */
-const ModalExito: React.FC<{ cerrarModal: () => void }> = ({ cerrarModal }) => (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-    <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg text-center">
-      <CheckCircle2 size={48} className="text-green-600 mx-auto mb-3" />
-      <h3 className="text-lg font-semibold mb-2">¡Éxito!</h3>
-      <p className="mb-4">
-        La historia clínica se ha procesado correctamente.
-      </p>
-      <button
-        onClick={cerrarModal}
-        className="bg-[#008658] text-white px-4 py-2 rounded hover:bg-green-700"
-      >
-        Aceptar
-      </button>
-    </div>
-  </div>
-);

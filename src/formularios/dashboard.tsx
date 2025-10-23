@@ -32,7 +32,7 @@ function Dashboard() {
       nombre: "Usuarios",
       icono: <Users size={22} className="text-white" />,
       subOpciones: [
-        { nombre: "Crear usuario", ruta: "/crear-usuario", icono: <UserPlus size={20} className="text-white" /> },
+        { nombre: "Crear usuario", ruta: "/CrearFuncionarios", icono: <UserPlus size={20} className="text-white" /> },
         { nombre: "Administrar roles", ruta: "/GestionRoles", icono: <Shield size={20} className="text-white" /> },
         { nombre: "Administrar permiso", ruta: "/GestionPermisos", icono: <Shield size={20} className="text-white" /> },
       ],
