@@ -14,7 +14,7 @@ export default function GestionPermisos() {
 
   const [formData, setFormData] = useState({
     id: null,
-    nombre: "",
+    name: "",
     descripcion: "",
     url: "",
   });
@@ -30,7 +30,14 @@ export default function GestionPermisos() {
     try {
       const res = await fetch("http://127.0.0.1:8000/api/ListarPermisos");
       const data = await res.json();
-      setPermisos(data);
+      // Validación para evitar errores de formato
+      if (Array.isArray(data)) {
+        setPermisos(data);
+      } else if (data.data) {
+        setPermisos(data.data);
+      } else {
+        console.error("⚠️ Respuesta inesperada del backend:", data);
+      }
     } catch (error) {
       console.error("Error al listar permisos:", error);
     }
@@ -51,8 +58,6 @@ export default function GestionPermisos() {
   const crearPermiso = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      console.log("📦 Enviando permiso:", formData);
-
       const response = await fetch("http://127.0.0.1:8000/api/CrearPermiso", {
         method: "POST",
         headers: {
@@ -60,26 +65,24 @@ export default function GestionPermisos() {
           Accept: "application/json",
         },
         body: JSON.stringify({
-          nombre: formData.nombre,
-          descripcion: formData.descripcion,
-          url: formData.url,
+          name: formData.name.trim(),
+          descripcion: formData.descripcion.trim(),
+          url: formData.url.trim(),
         }),
       });
 
       const data = await response.json();
-      console.log("✅ Respuesta del backend:", data);
 
       if (response.ok) {
         setIsModalOpen(false);
-        setFormData({ id: null, nombre: "", descripcion: "", url: "" });
+        setFormData({ id: null, name: "", descripcion: "", url: "" });
         setMostrarModalExito(true);
         cargarPermisos();
       } else {
-        console.error("❌ Error al crear permiso:", data);
         alert(data.message || "Error al crear el permiso");
       }
     } catch (error) {
-      console.error("💥 Error al crear permiso:", error);
+      console.error("Error al crear permiso:", error);
       alert("Error al conectar con el servidor");
     }
   };
@@ -90,7 +93,7 @@ export default function GestionPermisos() {
   const abrirEditar = (permiso: any) => {
     setFormData({
       id: permiso.id,
-      nombre: permiso.nombre,
+      name: permiso.name,
       descripcion: permiso.descripcion,
       url: permiso.url,
     });
@@ -101,23 +104,23 @@ export default function GestionPermisos() {
   // =========================
   // 🔹 Actualizar permiso
   // =========================
-  const confirmarActualizar = () => setModalConfirmacion({ tipo: "actualizar" });
-
   const actualizarPermiso = async () => {
     try {
-      console.log("✏️ Actualizando permiso:", formData);
-
       const response = await fetch("http://127.0.0.1:8000/api/ActualizarPermiso", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          id: formData.id,
+          name: formData.name.trim(),
+          descripcion: formData.descripcion.trim(),
+          url: formData.url.trim(),
+        }),
       });
 
       const data = await response.json();
-      console.log("✅ Respuesta del backend:", data);
 
       if (response.ok) {
         setModalConfirmacion({ tipo: null });
@@ -125,11 +128,10 @@ export default function GestionPermisos() {
         setMostrarModalExito(true);
         cargarPermisos();
       } else {
-        console.error("❌ Error al actualizar:", data);
         alert(data.message || "Error al actualizar el permiso");
       }
     } catch (error) {
-      console.error("💥 Error al actualizar permiso:", error);
+      console.error("Error al actualizar permiso:", error);
       alert("Error al conectar con el servidor");
     }
   };
@@ -137,13 +139,8 @@ export default function GestionPermisos() {
   // =========================
   // 🔹 Eliminar permiso
   // =========================
-  const confirmarEliminar = (id: number) =>
-    setModalConfirmacion({ tipo: "eliminar", id });
-
   const eliminarPermiso = async () => {
     try {
-      console.log("🗑️ Eliminando permiso:", modalConfirmacion.id);
-
       const response = await fetch("http://127.0.0.1:8000/api/EliminarPermiso", {
         method: "PUT",
         headers: {
@@ -154,18 +151,16 @@ export default function GestionPermisos() {
       });
 
       const data = await response.json();
-      console.log("✅ Respuesta del backend:", data);
 
       if (response.ok) {
         setModalConfirmacion({ tipo: null });
         setMostrarModalExito(true);
         cargarPermisos();
       } else {
-        console.error("❌ Error al eliminar:", data);
         alert(data.message || "Error al eliminar el permiso");
       }
     } catch (error) {
-      console.error("💥 Error al eliminar permiso:", error);
+      console.error("Error al eliminar permiso:", error);
       alert("Error al conectar con el servidor");
     }
   };
@@ -178,12 +173,10 @@ export default function GestionPermisos() {
       <div className="bg-white shadow-lg rounded-2xl p-6 w-full border border-gray-200">
         {/* Encabezado */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">
-            Gestión de Permisos
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-800">Gestión de Permisos</h1>
           <button
             onClick={() => {
-              setFormData({ id: null, nombre: "", descripcion: "", url: "" });
+              setFormData({ id: null, name: "", descripcion: "", url: "" });
               setIsEditing(false);
               setIsModalOpen(true);
             }}
@@ -197,19 +190,19 @@ export default function GestionPermisos() {
         <table className="w-full border rounded-lg overflow-hidden">
           <thead className="bg-gray-200">
             <tr>
-              <th className="p-2 w-[5%]">ID</th>
-            <th className="p-2 w-[15%]">Nombre</th>
-            <th className="p-2 w-[25%]">Descripción</th>
-            <th className="p-2 w-[40%]">URL</th>
-            <th className="p-2 text-center w-[15%]"></th>
+              <th className="p-2">ID</th>
+              <th className="p-2">Nombre</th>
+              <th className="p-2">Descripción</th>
+              <th className="p-2">URL</th>
+              <th className="p-2 text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {permisos.length > 0 ? (
               permisos.map((permiso) => (
-                <tr key={permiso.id} className="border-b">
-                  <td className="p-2">{permiso.id}</td>
-                  <td className="p-2">{permiso.nombre}</td>
+                <tr key={permiso.id} className="border-b hover:bg-gray-50">
+                  <td className="p-2 text-center">{permiso.id}</td>
+                  <td className="p-2">{permiso.name}</td>
                   <td className="p-2">{permiso.descripcion}</td>
                   <td className="p-2">{permiso.url}</td>
                   <td className="p-2 flex justify-center gap-4">
@@ -221,7 +214,9 @@ export default function GestionPermisos() {
                       <Pencil size={20} />
                     </button>
                     <button
-                      onClick={() => confirmarEliminar(permiso.id)}
+                      onClick={() =>
+                        setModalConfirmacion({ tipo: "eliminar", id: permiso.id })
+                      }
                       className="text-red-600 hover:text-red-800"
                       title="Eliminar"
                     >
@@ -297,9 +292,9 @@ const ModalPermiso: React.FC<{
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
-          name="nombre"
+          name="name"
           placeholder="Nombre del permiso"
-          value={formData.nombre}
+          value={formData.name}
           onChange={handleChange}
           className="border rounded-lg p-2 w-full"
           required

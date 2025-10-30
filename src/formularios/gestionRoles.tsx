@@ -17,7 +17,7 @@ const GestionRoles: React.FC = () => {
   }>({ tipo: null });
 
   const [formData, setFormData] = useState({
-    nombre: "",
+    name: "",
     descripcion: "",
     permisos: [] as number[],
   });
@@ -36,9 +36,11 @@ const GestionRoles: React.FC = () => {
     try {
       const res = await fetch("http://127.0.0.1:8000/api/ListarRoles");
       const data = await res.json();
-      setRoles(data);
+      console.log("📦 Roles recibidos:", data);
+      setRoles(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error al listar roles", error);
+      setRoles([]);
     }
   };
 
@@ -46,9 +48,11 @@ const GestionRoles: React.FC = () => {
     try {
       const res = await fetch("http://127.0.0.1:8000/api/ListarPermisos");
       const data = await res.json();
-      setPermisos(data);
+      console.log("📦 Permisos recibidos:", data);
+      setPermisos(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error al listar permisos", error);
+      setPermisos([]);
     }
   };
 
@@ -85,7 +89,7 @@ const GestionRoles: React.FC = () => {
           Accept: "application/json",
         },
         body: JSON.stringify({
-          nombre: formData.nombre,
+          name: formData.name,
           descripcion: formData.descripcion,
           permisos: formData.permisos || [],
         }),
@@ -97,7 +101,7 @@ const GestionRoles: React.FC = () => {
       if (response.ok) {
         setIsModalOpen(false);
         setMostrarModalExito(true);
-        setFormData({ nombre: "", descripcion: "", permisos: [] });
+        setFormData({ name: "", descripcion: "", permisos: [] });
         cargarRoles();
       } else {
         console.error("❌ Error en la creación:", data);
@@ -115,7 +119,7 @@ const GestionRoles: React.FC = () => {
   const abrirEditar = (rol: any) => {
     setEditData({
       ...rol,
-      permisos: rol.permisos.map((p: any) => p.id),
+      permisos: rol.permisos ? rol.permisos.map((p: any) => p.id) : [],
     });
     setIsEditModalOpen(true);
   };
@@ -200,13 +204,17 @@ const GestionRoles: React.FC = () => {
                 className="border-b py-2 flex justify-between items-center"
               >
                 <div>
-                  <p className="font-semibold">{rol.nombre}</p>
+                  <p className="font-semibold">{rol.name || rol.name}</p>
                   <p className="text-sm text-gray-600">
                     {rol.descripcion || "Sin descripción"}
                   </p>
                   <p className="text-xs text-gray-500">
                     Permisos:{" "}
-                    {rol.permisos.map((p: any) => p.nombre).join(", ") || "—"}
+                    {rol.permisos && Array.isArray(rol.permisos)
+                      ? rol.permisos
+                          .map((p: any) => p.name || p.name)
+                          .join(", ")
+                      : "—"}
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -308,9 +316,9 @@ const ModalRol: React.FC<{
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
-          name="nombre"
+          name="name"
           placeholder="Nombre del rol"
-          value={formData.nombre}
+          value={formData.name || formData.name || ""}
           onChange={handleChange}
           className="border rounded-lg p-2 w-full"
           required
@@ -318,23 +326,30 @@ const ModalRol: React.FC<{
         <textarea
           name="descripcion"
           placeholder="Descripción"
-          value={formData.descripcion}
+          value={formData.descripcion || ""}
           onChange={handleChange}
           className="border rounded-lg p-2 w-full"
         />
         <div>
           <h3 className="font-semibold mb-2">Permisos</h3>
           <div className="grid grid-cols-2 gap-2">
-            {permisos.map((permiso) => (
-              <label key={permiso.id} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.permisos.includes(permiso.id)}
-                  onChange={() => handleCheckboxChange(permiso.id)}
-                />
-                {permiso.nombre}
-              </label>
-            ))}
+            {Array.isArray(permisos) && permisos.length > 0 ? (
+              permisos.map((permiso) => (
+                <label key={permiso.id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={
+                      formData.permisos &&
+                      formData.permisos.includes(permiso.id)
+                    }
+                    onChange={() => handleCheckboxChange(permiso.id)}
+                  />
+                  {permiso.name || permiso.name}
+                </label>
+              ))
+            ) : (
+              <p className="text-gray-500 text-sm">No hay permisos disponibles.</p>
+            )}
           </div>
         </div>
         <div className="flex justify-end gap-4 mt-4">

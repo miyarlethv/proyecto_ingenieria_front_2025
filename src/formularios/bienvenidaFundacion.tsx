@@ -241,7 +241,7 @@ function BienvenidaFundacion() {
                 type="text"
                 value={edad}
                 onChange={(e) => setEdad(e.target.value)}
-                placeholder="Edad de la mascotaborder"
+                placeholder="Edad de la mascota"
                 className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2"
                 required
               />

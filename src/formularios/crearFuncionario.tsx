@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Eye, EyeOff, Pencil, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
 
-type Role = { id: number; nombre: string };
+// ✅ Tipo Role con descripción opcional
+type Role = { id: number; nombre: string; descripcion?: string };
+
 type Funcionario = {
   id: number;
   nombre: string;
@@ -13,7 +15,6 @@ type Funcionario = {
   rol_id: string | number;
   rol?: Role;
   password?: string;
-
 };
 
 export default function GestionFuncionarios() {
@@ -34,7 +35,6 @@ export default function GestionFuncionarios() {
     email: "",
     rol_id: "",
     password: "",
-    
   });
 
   // =========================
@@ -77,12 +77,22 @@ export default function GestionFuncionarios() {
   // =========================
   const crearFuncionario = async (e: FormEvent) => {
     e.preventDefault();
+
+    if (!formData.rol_id) {
+      alert("Por favor seleccione un rol antes de continuar");
+      return;
+    }
+
     try {
       const res = await fetch("http://127.0.0.1:8000/api/CrearFuncionario", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          rol_id: Number(formData.rol_id),
+        }),
       });
+
       const data = await res.json();
 
       if (res.ok) {
@@ -111,7 +121,7 @@ export default function GestionFuncionarios() {
   // 🔹 Abrir modal editar
   // =========================
   const abrirEditar = (funcionario: Funcionario) => {
-    setFormData({ ...funcionario, password: "" }); // no mostrar contraseña
+    setFormData({ ...funcionario, password: "" });
     setIsEditing(true);
     setIsModalOpen(true);
   };
@@ -124,7 +134,10 @@ export default function GestionFuncionarios() {
       const res = await fetch("http://127.0.0.1:8000/api/ActualizarFuncionario", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          rol_id: Number(formData.rol_id),
+        }),
       });
       const data = await res.json();
 
@@ -166,14 +179,12 @@ export default function GestionFuncionarios() {
       console.error("Error al eliminar funcionario:", error);
     }
   };
-    // Tipos de documento
+
   const tiposDocumentoMap: Record<string, string> = {
-  CC: "Cédula de ciudadanía",
-  TI: "Tarjeta de identidad",
-  CE: "Cédula de extranjería",
-};
-
-
+    CC: "Cédula de ciudadanía",
+    TI: "Tarjeta de identidad",
+    CE: "Cédula de extranjería",
+  };
 
   // =========================
   // 🔹 Render principal
@@ -226,23 +237,18 @@ export default function GestionFuncionarios() {
                   <td>{f.id}</td>
                   <td>{f.nombre}</td>
                   <td>{tiposDocumentoMap[f.tipo_documento] || f.tipo_documento}</td>
-                  <td>{f.nit}`</td>
+                  <td>{f.nit}</td>
                   <td>{f.telefono}</td>
                   <td>{f.email}</td>
-                  <td>{f.rol?.nombre || 'Sin rol'}</td>
+                  <td>
+                    {f.rol?.nombre || "Sin rol"}<br />
+                    <span className="text-xs text-gray-500">{f.rol?.descripcion}</span>
+                  </td>
                   <td className="flex justify-center gap-4 py-2">
-                    <button
-                      onClick={() => abrirEditar(f)}
-                      className="text-black hover:text-blue-700"
-                      title="Editar"
-                    >
+                    <button onClick={() => abrirEditar(f)} className="text-black hover:text-blue-700">
                       <Pencil size={20} />
                     </button>
-                    <button
-                      onClick={() => confirmarEliminar(f.id)}
-                      className="text-red-600 hover:text-red-800"
-                      title="Eliminar"
-                    >
+                    <button onClick={() => confirmarEliminar(f.id)} className="text-red-600 hover:text-red-800">
                       <Trash2 size={20} />
                     </button>
                   </td>
@@ -259,7 +265,7 @@ export default function GestionFuncionarios() {
         </table>
       </div>
 
-      {/* Modal Crear / Editar */}
+      {/* Modal crear/editar */}
       {isModalOpen && (
         <ModalEmpleado
           titulo={isEditing ? "Editar Funcionario" : "Nuevo Funcionario"}
@@ -278,38 +284,23 @@ export default function GestionFuncionarios() {
         />
       )}
 
-      {/* Modal Confirmación */}
       {modalConfirmacion.tipo && (
         <ModalConfirmacion
           tipo={modalConfirmacion.tipo}
-          confirmar={
-            modalConfirmacion.tipo === "eliminar"
-              ? eliminarFuncionario
-              : actualizarFuncionario
-          }
+          confirmar={modalConfirmacion.tipo === "eliminar" ? eliminarFuncionario : actualizarFuncionario}
           cancelar={() => setModalConfirmacion({ tipo: null })}
         />
       )}
 
-      {/* Modal Éxito */}
       {mostrarModalExito && <ModalExito cerrarModal={() => setMostrarModalExito(false)} />}
     </div>
   );
 }
 
 // =============================
-// 🔹 MODAL DE FUNCIONARIO
+// 🔹 MODAL DE FUNCIONARIO — corregido el tipado
 // =============================
-const ModalEmpleado: React.FC<{
-  titulo: string;
-  formData: any;
-  handleChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  cerrar: () => void;
-  handleSubmit: (e: FormEvent) => void;
-  roles: Role[];
-  verContraseña: boolean;
-  setVerContraseña: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({
+const ModalEmpleado = ({
   titulo,
   formData,
   handleChange,
@@ -318,6 +309,15 @@ const ModalEmpleado: React.FC<{
   roles,
   verContraseña,
   setVerContraseña,
+}: {
+  titulo: string;
+  formData: any;
+  handleChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  cerrar: () => void;
+  handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  roles: Role[];
+  verContraseña: boolean;
+  setVerContraseña: React.Dispatch<React.SetStateAction<boolean>>;
 }) => (
   <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
     <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg">
@@ -369,6 +369,7 @@ const ModalEmpleado: React.FC<{
           onChange={handleChange}
           className="border rounded-lg p-2 w-full"
         />
+
         <select
           name="rol_id"
           value={formData.rol_id}
@@ -377,14 +378,13 @@ const ModalEmpleado: React.FC<{
           required
         >
           <option value="">Seleccione un rol</option>
-          {roles.map((rol) => (
+          {roles.map((rol: Role) => (
             <option key={rol.id} value={rol.id}>
-              {rol.nombre}
+              {rol.nombre} — {rol.descripcion}
             </option>
           ))}
         </select>
 
-        {/* Contraseña */}
         {!formData.id && (
           <div className="relative">
             <input
@@ -406,17 +406,10 @@ const ModalEmpleado: React.FC<{
         )}
 
         <div className="flex justify-end gap-4 mt-4">
-          <button
-            type="button"
-            onClick={cerrar}
-            className="px-4 py-2 border border-gray-400 rounded"
-          >
+          <button type="button" onClick={cerrar} className="px-4 py-2 border border-gray-400 rounded">
             Cancelar
           </button>
-          <button
-           type="submit"
-            className="bg-[#008658] text-white px-4 py-2 rounded hover:bg-green-700"
-          >
+          <button type="submit" className="bg-[#008658] text-white px-4 py-2 rounded hover:bg-green-700">
             Guardar
           </button>
         </div>
@@ -428,30 +421,18 @@ const ModalEmpleado: React.FC<{
 // =============================
 // 🔹 MODALES REUTILIZABLES
 // =============================
-const ModalConfirmacion: React.FC<{
-  tipo: "eliminar" | "actualizar";
-  confirmar: () => void;
-  cancelar: () => void;
-}> = ({ tipo, confirmar, cancelar }) => (
+const ModalConfirmacion = ({ tipo, confirmar, cancelar }: any) => (
   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
     <div className="bg-white rounded-lg p-6 w-full max-w-sm text-center shadow-lg">
       <AlertTriangle size={48} className="text-yellow-500 mx-auto mb-3" />
       <h3 className="text-lg font-semibold mb-2">
-        {tipo === "eliminar"
-          ? "¿Deseas eliminar este funcionario?"
-          : "¿Deseas actualizar este funcionario?"}
+        {tipo === "eliminar" ? "¿Deseas eliminar este funcionario?" : "¿Deseas actualizar este funcionario?"}
       </h3>
       <div className="flex justify-center gap-4 mt-4">
-        <button
-          onClick={confirmar}
-          className="bg-[#008658] text-white px-4 py-2 rounded hover:bg-green-700"
-        >
+        <button onClick={confirmar} className="bg-[#008658] text-white px-4 py-2 rounded hover:bg-green-700">
           Confirmar
         </button>
-        <button
-          onClick={cancelar}
-          className="border border-gray-400 px-4 py-2 rounded"
-        >
+        <button onClick={cancelar} className="border border-gray-400 px-4 py-2 rounded">
           Cancelar
         </button>
       </div>
@@ -459,16 +440,13 @@ const ModalConfirmacion: React.FC<{
   </div>
 );
 
-const ModalExito: React.FC<{ cerrarModal: () => void }> = ({ cerrarModal }) => (
+const ModalExito = ({ cerrarModal }: any) => (
   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
     <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg text-center">
       <CheckCircle2 size={48} className="text-green-600 mx-auto mb-3" />
       <h3 className="text-lg font-semibold mb-2">¡Éxito!</h3>
       <p className="mb-4">El funcionario se ha procesado correctamente.</p>
-      <button
-        onClick={cerrarModal}
-        className="bg-[#008658] text-white px-4 py-2 rounded hover:bg-green-700"
-      >
+      <button onClick={cerrarModal} className="bg-[#008658] text-white px-4 py-2 rounded hover:bg-green-700">
         Aceptar
       </button>
     </div>
