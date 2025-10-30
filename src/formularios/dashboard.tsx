@@ -32,8 +32,9 @@ function Dashboard() {
       nombre: "Usuarios",
       icono: <Users size={22} className="text-white" />,
       subOpciones: [
-        { nombre: "Crear usuario", ruta: "/crear-usuario", icono: <UserPlus size={20} className="text-white" /> },
-        { nombre: "Administrar roles", ruta: "/administrar-roles", icono: <Shield size={20} className="text-white" /> },
+        { nombre: "Crear usuario", ruta: "/CrearFuncionarios", icono: <UserPlus size={20} className="text-white" /> },
+        { nombre: "Administrar roles", ruta: "/GestionRoles", icono: <Shield size={20} className="text-white" /> },
+        { nombre: "Administrar permiso", ruta: "/GestionPermisos", icono: <Shield size={20} className="text-white" /> },
       ],
     },
   ];
@@ -86,7 +87,7 @@ function Dashboard() {
           <h1 className="text-3xl font-bold text-[#008658]">Dashboard</h1>
           <button
             onClick={() => navigate("/")}
-            className="bg-white text-black border border-black rounded-[10px] px-4 py-1 hover:bg-gray-100 transition"
+            className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
           >
             Volver
           </button>

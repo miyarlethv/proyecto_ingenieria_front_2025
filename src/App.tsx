@@ -9,6 +9,9 @@ import Dashboard from './formularios/dashboard';
 import RecuperarContraseña from './formularios/RecuperarContraseña';
 import HistoriaClinica from './formularios/historiaClinica';
 import CrearHistoria from './formularios/crearHistoria';
+import GestionRoles from './formularios/gestionRoles';
+import GestionPermisos from './formularios/gestionPermisos';
+import CrearFuncionarios from './formularios/crearFuncionario';
 
 
 function App() {
@@ -24,6 +27,9 @@ function App() {
         <Route path="/recuperar-contraseña" element={<RecuperarContraseña />} />
         <Route path="/HistoriaClinica" element={<HistoriaClinica />} />
         <Route path="/crearHistoria/:mascotaId" element={<CrearHistoria />} />
+        <Route path="/GestionRoles" element={<GestionRoles />} />
+        <Route path="/GestionPermisos" element={<GestionPermisos />} />
+        <Route path="/CrearFuncionarios" element={<CrearFuncionarios />} />
 
       </Routes>
     </Router>
