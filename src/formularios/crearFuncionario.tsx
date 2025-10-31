@@ -3,8 +3,9 @@ import type { ChangeEvent, FormEvent } from "react";
 import { Eye, EyeOff, Pencil, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
 
 // ✅ Tipo Role con descripción opcional
-type Role = { id: number; nombre: string; descripcion?: string };
+type Role = { id: number; name: string; descripcion?: string };
 
+// ✅ Tipo Funcionario con roles como array
 type Funcionario = {
   id: number;
   nombre: string;
@@ -12,8 +13,7 @@ type Funcionario = {
   nit: string;
   telefono: string;
   email: string;
-  rol_id: string | number;
-  rol?: Role;
+  roles?: Role[];
   password?: string;
 };
 
@@ -33,7 +33,7 @@ export default function GestionFuncionarios() {
     nit: "",
     telefono: "",
     email: "",
-    rol_id: "",
+    rol: "",
     password: "",
   });
 
@@ -78,7 +78,7 @@ export default function GestionFuncionarios() {
   const crearFuncionario = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!formData.rol_id) {
+    if (!formData.rol) {
       alert("Por favor seleccione un rol antes de continuar");
       return;
     }
@@ -87,10 +87,7 @@ export default function GestionFuncionarios() {
       const res = await fetch("http://127.0.0.1:8000/api/CrearFuncionario", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          rol_id: Number(formData.rol_id),
-        }),
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
@@ -105,7 +102,7 @@ export default function GestionFuncionarios() {
           telefono: "",
           email: "",
           password: "",
-          rol_id: "",
+          rol: "",
         });
         setMostrarModalExito(true);
         cargarFuncionarios();
@@ -121,7 +118,16 @@ export default function GestionFuncionarios() {
   // 🔹 Abrir modal editar
   // =========================
   const abrirEditar = (funcionario: Funcionario) => {
-    setFormData({ ...funcionario, password: "" });
+    setFormData({
+      id: funcionario.id,
+      nombre: funcionario.nombre,
+      tipo_documento: funcionario.tipo_documento,
+      nit: funcionario.nit,
+      telefono: funcionario.telefono,
+      email: funcionario.email,
+      rol: funcionario.roles && funcionario.roles.length > 0 ? funcionario.roles[0].name : "",
+      password: "",
+    });
     setIsEditing(true);
     setIsModalOpen(true);
   };
@@ -134,10 +140,7 @@ export default function GestionFuncionarios() {
       const res = await fetch("http://127.0.0.1:8000/api/ActualizarFuncionario", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          rol_id: Number(formData.rol_id),
-        }),
+        body: JSON.stringify(formData),
       });
       const data = await res.json();
 
@@ -204,7 +207,7 @@ export default function GestionFuncionarios() {
                 nit: "",
                 telefono: "",
                 email: "",
-                rol_id: "",
+                rol: "",
                 password: "",
               });
               setIsEditing(false);
@@ -241,8 +244,9 @@ export default function GestionFuncionarios() {
                   <td>{f.telefono}</td>
                   <td>{f.email}</td>
                   <td>
-                    {f.rol?.nombre || "Sin rol"}<br />
-                    <span className="text-xs text-gray-500">{f.rol?.descripcion}</span>
+                    {f.roles && f.roles.length > 0
+                      ? f.roles.map((r) => r.name).join(", ")
+                      : "Sin rol"}
                   </td>
                   <td className="flex justify-center gap-4 py-2">
                     <button onClick={() => abrirEditar(f)} className="text-black hover:text-blue-700">
@@ -256,7 +260,7 @@ export default function GestionFuncionarios() {
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="text-center text-gray-500 p-4">
+                <td colSpan={8} className="text-center text-gray-500 p-4">
                   No hay funcionarios registrados.
                 </td>
               </tr>
@@ -298,7 +302,7 @@ export default function GestionFuncionarios() {
 }
 
 // =============================
-// 🔹 MODAL DE FUNCIONARIO — corregido el tipado
+// 🔹 MODAL DE FUNCIONARIO
 // =============================
 const ModalEmpleado = ({
   titulo,
@@ -371,16 +375,15 @@ const ModalEmpleado = ({
         />
 
         <select
-          name="rol_id"
-          value={formData.rol_id}
+          name="rol"
+          value={formData.rol}
           onChange={handleChange}
-          className="border rounded-lg p-2 w-full"
           required
         >
           <option value="">Seleccione un rol</option>
           {roles.map((rol: Role) => (
-            <option key={rol.id} value={rol.id}>
-              {rol.nombre} — {rol.descripcion}
+            <option key={rol.id} value={rol.name}>
+              {rol.name}
             </option>
           ))}
         </select>

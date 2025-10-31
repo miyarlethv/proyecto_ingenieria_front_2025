@@ -62,7 +62,8 @@ const GestionRoles: React.FC = () => {
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleCheckboxChange = (permisoId: number) => {
@@ -91,7 +92,7 @@ const GestionRoles: React.FC = () => {
         body: JSON.stringify({
           name: formData.name,
           descripcion: formData.descripcion,
-          permisos: formData.permisos || [],
+          permissions: formData.permisos || [], // 👈 se cambia "permisos" → "permissions"
         }),
       });
 
@@ -119,7 +120,10 @@ const GestionRoles: React.FC = () => {
   const abrirEditar = (rol: any) => {
     setEditData({
       ...rol,
-      permisos: rol.permisos ? rol.permisos.map((p: any) => p.id) : [],
+      permisos:
+        rol.permissions?.map((p: any) => p.id) ||
+        rol.permisos?.map((p: any) => p.id) ||
+        [],
     });
     setIsEditModalOpen(true);
   };
@@ -127,7 +131,8 @@ const GestionRoles: React.FC = () => {
   const handleEditChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setEditData({ ...editData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setEditData((prev: any) => ({ ...prev, [name]: value }));
   };
 
   const handleEditCheckbox = (permisoId: number) => {
@@ -143,15 +148,25 @@ const GestionRoles: React.FC = () => {
 
   const actualizarRol = async () => {
     try {
-      await fetch("http://127.0.0.1:8000/api/ActualizarRol", {
+      const response = await fetch("http://127.0.0.1:8000/api/ActualizarRol", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editData),
+        body: JSON.stringify({
+          id: editData.id,
+          name: editData.name,
+          descripcion: editData.descripcion,
+          permissions: editData.permisos || [], // 👈 se cambia "permisos" → "permissions"
+        }),
       });
-      setModalConfirmacion({ tipo: null });
-      setIsEditModalOpen(false);
-      setMostrarModalExito(true);
-      cargarRoles();
+
+      if (response.ok) {
+        setModalConfirmacion({ tipo: null });
+        setIsEditModalOpen(false);
+        setMostrarModalExito(true);
+        cargarRoles();
+      } else {
+        console.error("Error al actualizar rol");
+      }
     } catch (error) {
       console.error("Error al actualizar rol", error);
     }
@@ -165,14 +180,19 @@ const GestionRoles: React.FC = () => {
 
   const eliminarRol = async () => {
     try {
-      await fetch("http://127.0.0.1:8000/api/EliminarRol", {
+      const response = await fetch("http://127.0.0.1:8000/api/EliminarRol", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: modalConfirmacion.id }),
       });
-      setModalConfirmacion({ tipo: null });
-      setMostrarModalExito(true);
-      cargarRoles();
+
+      if (response.ok) {
+        setModalConfirmacion({ tipo: null });
+        setMostrarModalExito(true);
+        cargarRoles();
+      } else {
+        console.error("Error al eliminar rol");
+      }
     } catch (error) {
       console.error("Error al eliminar rol", error);
     }
@@ -204,15 +224,15 @@ const GestionRoles: React.FC = () => {
                 className="border-b py-2 flex justify-between items-center"
               >
                 <div>
-                  <p className="font-semibold">{rol.name || rol.name}</p>
+                  <p className="font-semibold">{rol.name}</p>
                   <p className="text-sm text-gray-600">
                     {rol.descripcion || "Sin descripción"}
                   </p>
                   <p className="text-xs text-gray-500">
                     Permisos:{" "}
-                    {rol.permisos && Array.isArray(rol.permisos)
-                      ? rol.permisos
-                          .map((p: any) => p.name || p.name)
+                    {(rol.permissions || rol.permisos)?.length
+                      ? (rol.permissions || rol.permisos)
+                          .map((p: any) => p.name)
                           .join(", ")
                       : "—"}
                   </p>
@@ -318,7 +338,7 @@ const ModalRol: React.FC<{
           type="text"
           name="name"
           placeholder="Nombre del rol"
-          value={formData.name || formData.name || ""}
+          value={formData.name || ""}
           onChange={handleChange}
           className="border rounded-lg p-2 w-full"
           required
@@ -344,11 +364,13 @@ const ModalRol: React.FC<{
                     }
                     onChange={() => handleCheckboxChange(permiso.id)}
                   />
-                  {permiso.name || permiso.name}
+                  {permiso.name}
                 </label>
               ))
             ) : (
-              <p className="text-gray-500 text-sm">No hay permisos disponibles.</p>
+              <p className="text-gray-500 text-sm">
+                No hay permisos disponibles.
+              </p>
             )}
           </div>
         </div>
