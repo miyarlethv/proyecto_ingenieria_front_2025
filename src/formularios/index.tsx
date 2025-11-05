@@ -1,52 +1,69 @@
 import { useNavigate } from "react-router-dom";
 import logoIndex from "../assets/LogoIndex.jpg";
 import Perros from "../assets/Perros.jpg";
-import imagen2 from "../assets/imagen2.jpeg";
-import imagen3 from "../assets/imagen3.jpeg";
-import imagen4 from "../assets/imagen4.jpeg";
-import imagen5 from "../assets/imagen5.jpeg";
+import Imagen1 from "../assets/Imagen1.jpg";
+import Imagen2 from "../assets/Imagen2.jpg";
+import Imagen3 from "../assets/Imagen3.jpg";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-const imagenes = [imagen2, imagen3, imagen4, logoIndex, Perros, imagen5];
+const imagenes = [Imagen1, Imagen2, Imagen3, Perros];
 
 function Carrusel() {
   const settings = {
     dots: false,
     infinite: true,
-    speed: 500,
+    speed: 600,
     slidesToShow: 1,
     slidesToScroll: 1,
     autoplay: true,
-    autoplaySpeed: 1500,
-    arrows: true // Flechas visibles
+    autoplaySpeed: 2500,
+    arrows: true,
   };
-  // Estilos en línea para las flechas
-  const arrowStyles = `
-    .slick-prev, .slick-next {
-      top: 50% !important;
-      transform: translateY(-50%);
-      z-index: 2;
-    }
-    .slick-prev:before, .slick-next:before {
-      color: #000 !important;
-      font-size: 32px !important;
-    }
-    .slick-prev { left: 20px !important; }
-    .slick-next { right: 20px !important; }
-  `;
+
   return (
-    <div style={{ width: "100%", height: "400px", position: "relative" }}>
-      <style>{arrowStyles}</style>
-      <Slider {...settings}>
-        {imagenes.map((img, idx) => (
-          <div key={idx}>
-            <img src={img} alt={`slide-${idx}`} style={{ width: "100%", height: "400px", objectFit: "cover", borderRadius: 0 }} />
-          </div>
-        ))}
-      </Slider>
-    </div>
+   <div className="relative w-full h-[25vh] sm:h-[30vh] md:h-[45vh] lg:h-[55vh] xl:h-[60vh] overflow-hidden">
+  <Slider {...settings}>
+    {imagenes.map((img, idx) => (
+      <div
+        key={idx}
+        className="flex justify-center items-center w-full h-full overflow-hidden"
+      >
+        <img
+          src={img}
+          alt={`slide-${idx}`}
+          className="w-full h-full object-contain object-center"
+        />
+      </div>
+    ))}
+  </Slider>
+
+  <style>
+    {`
+      .slick-prev, .slick-next {
+        position: absolute !important;
+        top: 50% !important;
+        transform: translateY(-50%);
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+      }
+      .slick-prev:hover, .slick-next:hover {
+        background: rgba(255, 255, 255, 1);
+      }
+      .slick-prev:before, .slick-next:before {
+        color: #000 !important;
+        font-size: 24px !important;
+        opacity: 1 !important;
+      }
+      .slick-prev { left: 20px !important; }
+      .slick-next { right: 20px !important; }
+    `}
+  </style>
+</div>
   );
 }
 
@@ -71,7 +88,9 @@ function Index() {
             alt="Logo"
             className="w-12 h-12 rounded-full"
           />
-          <h1 className="text-lg font-bold text-[#ffffff]">ADOPTA CLUB PURPURA</h1>
+          <h1 className="text-lg font-bold text-white">
+            ADOPTA CLUB PÚRPURA
+          </h1>
         </div>
         <nav className="flex gap-2">
           <button
@@ -89,7 +108,7 @@ function Index() {
         </nav>
       </header>
 
-      {/* Carrusel de imágenes a ancho completo y 400px de alto */}
+      {/* Carrusel de imágenes */}
       <Carrusel />
 
       {/* Sección de animales vacía */}
