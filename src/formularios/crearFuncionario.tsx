@@ -347,7 +347,7 @@ const ModalEmpleado = ({
           <option value="CC">Cédula de ciudadanía</option>
           <option value="TI">Tarjeta de identidad</option>
           <option value="CE">Cédula de extranjería</option>
-        </select>
+        </select>git
         <input
           type="text"
           name="nit"

@@ -252,7 +252,7 @@ const GestionRoles: React.FC = () => {
             ))
           ) : (
             <p className="text-center text-gray-500 mt-10">
-              No hay roles registrados.
+              No hay roles registrados
             </p>
           )}
         </div>
