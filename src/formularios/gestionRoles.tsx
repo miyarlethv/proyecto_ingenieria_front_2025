@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiFetch } from "../api";
 import type { ChangeEvent, FormEvent } from "react";
 import { Pencil, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
 
@@ -34,8 +35,8 @@ const GestionRoles: React.FC = () => {
 
   const cargarRoles = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/ListarRoles");
-      const data = await res.json();
+  const res = await apiFetch("/ListarRoles");
+  const data = await res.json();
       console.log("📦 Roles recibidos:", data);
       setRoles(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -46,8 +47,8 @@ const GestionRoles: React.FC = () => {
 
   const cargarPermisos = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/ListarPermisos");
-      const data = await res.json();
+  const res = await apiFetch("/ListarPermisos");
+  const data = await res.json();
       console.log("📦 Permisos recibidos:", data);
       setPermisos(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -83,7 +84,7 @@ const GestionRoles: React.FC = () => {
     try {
       console.log("📦 Enviando datos:", formData);
 
-      const response = await fetch("http://127.0.0.1:8000/api/CrearRol", {
+      const response = await apiFetch("/CrearRol", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -148,7 +149,7 @@ const GestionRoles: React.FC = () => {
 
   const actualizarRol = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/ActualizarRol", {
+      const response = await apiFetch("/ActualizarRol", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -180,7 +181,7 @@ const GestionRoles: React.FC = () => {
 
   const eliminarRol = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/EliminarRol", {
+      const response = await apiFetch("/EliminarRol", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: modalConfirmacion.id }),

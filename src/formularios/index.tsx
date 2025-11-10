@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiFetch } from "../api";
 import { useNavigate } from "react-router-dom";
 import logoIndex from "../assets/LogoIndex.jpg";
 import Imagen1 from "../assets/Imagen1.jpg";
@@ -7,10 +8,24 @@ import Imagen3 from "../assets/Imagen3.jpg";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import {FaInstagram,FaFacebook,FaTiktok,FaYoutube,FaWhatsapp,FaPhoneAlt,} 
-from "react-icons/fa";
+import {
+  FaInstagram,
+  FaFacebook,
+  FaTiktok,
+  FaYoutube,
+  FaWhatsapp,
+  FaPhoneAlt,
+} from "react-icons/fa";
 
 const imagenes = [Imagen1, Imagen2, Imagen3];
+
+interface Mascota {
+  id?: number | string;
+  nombre?: string;
+  edad?: string;
+  foto?: string | null;
+  [key: string]: any;
+}
 
 function Carrusel() {
   const settings = {
@@ -46,18 +61,41 @@ function Carrusel() {
 
 function Index() {
   const navigate = useNavigate();
-  const [mascotas, setMascotas] = useState([]);
+  const [mascotas, setMascotas] = useState<Mascota[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLoginClick = () => navigate("/login");
   const handleRegistroClick = () => navigate("/registro");
 
   // 🔹 Llamada al backend (Laravel)
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/mascotas/aleatorias") // Ajusta la URL si tu backend usa otro puerto o ruta
-      .then((res) => res.json())
-      .then((data) => {setMascotas(data); console.log(data);
-      })
-      .catch((err) => console.error("Error al cargar mascotas:", err));
+    const cargar = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await apiFetch("/mascotas/aleatorias");
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Error HTTP al cargar mascotas:", res.status, text);
+          setError(`Error ${res.status}: ${text}`);
+          setMascotas([]);
+          return;
+        }
+        const data = await res.json();
+        console.log("Mascotas cargadas:", data);
+        // Asegurarnos de que es un array
+        setMascotas(Array.isArray(data) ? data : []);
+      } catch (err: any) {
+        console.error("Error al cargar mascotas:", err);
+        setError(err?.message || String(err));
+        setMascotas([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargar();
   }, []);
 
   return (
@@ -96,29 +134,33 @@ function Index() {
         </h2>
 
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
-          {mascotas.length > 0 ? (
-            mascotas.map((mascota) => (
+          {loading ? (
+            <p className="col-span-full text-center text-gray-500">Cargando mascotas...</p>
+          ) : error ? (
+            <p className="col-span-full text-center text-red-500">{error}</p>
+          ) : mascotas.length > 0 ? (
+            mascotas.map((mascota, index) => (
               <div
-                key={mascota.id}
+                key={mascota.id ?? index}
                 className="flex flex-col items-center p-3 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition"
               >
                 <div className="w-28 h-28 rounded-full bg-gray-200 mb-3 overflow-hidden border border-gray-300">
                   <img
                     src={
-                      mascota.nombre
-                        ? "http://127.0.0.1:8000/api/storage/${mascota.foto}"
+                      mascota.foto
+                        ? `http://127.0.0.1:8000/api/storage/${mascota.foto}`
                         : "https://via.placeholder.com/150"
                     }
-                    alt={mascota.nombre}
+                    alt={mascota.nombre ?? "mascota"}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="text-center w-full">
                   <p className="border border-black px-2 py-1 mb-1 text-sm font-semibold">
-                    {mascota.nombre}
+                    {mascota.nombre ?? "-"}
                   </p>
                   <p className="border border-black px-2 py-1 mb-1 text-sm">
-                    {mascota.edad}
+                    {mascota.edad ?? "-"}
                   </p>
                   <button className="border border-black px-2 py-1 text-sm hover:bg-gray-100">
                     Ver más..

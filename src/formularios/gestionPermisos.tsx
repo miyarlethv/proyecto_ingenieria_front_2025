@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiFetch } from "../api";
 import type { ChangeEvent, FormEvent } from "react";
 import { Pencil, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
 
@@ -28,8 +29,8 @@ export default function GestionPermisos() {
 
   const cargarPermisos = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/ListarPermisos");
-      const data = await res.json();
+  const res = await apiFetch("/ListarPermisos");
+  const data = await res.json();
       // Validación para evitar errores de formato
       if (Array.isArray(data)) {
         setPermisos(data);
@@ -57,8 +58,29 @@ export default function GestionPermisos() {
   // =========================
   const crearPermiso = async (e: FormEvent) => {
     e.preventDefault();
+    
+    // Verificar autenticación
+    const token = localStorage.getItem("token");
+    const tipo = localStorage.getItem("tipo");
+    
+    console.log("🔑 Token:", token ? `${token.substring(0, 20)}...` : "NO HAY TOKEN");
+    console.log("👤 Tipo de usuario:", tipo);
+    
+    if (!token || tipo !== "fundacion") {
+      alert("Debes iniciar sesión como fundación para crear permisos");
+      window.location.href = "/inicio_sesion";
+      return;
+    }
+
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/CrearPermiso", {
+      console.log("📤 Enviando petición a /CrearPermiso");
+      console.log("📦 Datos:", {
+        name: formData.name.trim(),
+        descripcion: formData.descripcion.trim(),
+        url: formData.url.trim(),
+      });
+      
+      const response = await apiFetch("/CrearPermiso", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -70,8 +92,33 @@ export default function GestionPermisos() {
           url: formData.url.trim(),
         }),
       });
+      
+      console.log("📥 Respuesta recibida - Status:", response.status);
 
-      const data = await response.json();
+      // Verificar si la respuesta es JSON válido ANTES de intentar parsearlo
+      const contentType = response.headers.get("content-type");
+      const text = await response.text();
+      
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("❌ El servidor NO devolvió JSON:");
+        console.error("Status:", response.status);
+        console.error("Content-Type:", contentType);
+        console.error("Respuesta completa:", text.substring(0, 500));
+        
+        alert(`Error del servidor (${response.status}):\n${response.statusText}\n\nVerifica la consola para más detalles.`);
+        return;
+      }
+
+      // Intentar parsear el JSON solo si el Content-Type es correcto
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (jsonError) {
+        console.error("❌ Error al parsear JSON:", jsonError);
+        console.error("Texto recibido:", text.substring(0, 500));
+        alert("El servidor devolvió una respuesta inválida. Verifica la consola.");
+        return;
+      }
 
       if (response.ok) {
         setIsModalOpen(false);
@@ -82,8 +129,12 @@ export default function GestionPermisos() {
         alert(data.message || "Error al crear el permiso");
       }
     } catch (error) {
-      console.error("Error al crear permiso:", error);
-      alert("Error al conectar con el servidor");
+      console.error("❌ Error al crear permiso:", error);
+      if (error instanceof Error) {
+        alert(`Error: ${error.message}`);
+      } else {
+        alert("Error al conectar con el servidor");
+      }
     }
   };
 
@@ -106,7 +157,7 @@ export default function GestionPermisos() {
   // =========================
   const actualizarPermiso = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/ActualizarPermiso", {
+      const response = await apiFetch("/ActualizarPermiso", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -141,7 +192,7 @@ export default function GestionPermisos() {
   // =========================
   const eliminarPermiso = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/EliminarPermiso", {
+      const response = await apiFetch("/EliminarPermiso", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

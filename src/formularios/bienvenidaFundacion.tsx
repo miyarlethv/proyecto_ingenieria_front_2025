@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Search, PlusCircle, Pencil, Trash2, CheckCircle2, X } from "lucide-react";
+import { apiFetch } from "../api";
 
 function BienvenidaFundacion() {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ function BienvenidaFundacion() {
   useEffect(() => {
     const fetchMascotas = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/mascotas");
+        const response = await apiFetch("/mascotas");
         if (response.ok) {
           const data = await response.json();
           setMascotas(Array.isArray(data) ? data : data.data ?? []);
@@ -90,16 +91,15 @@ function BienvenidaFundacion() {
     try {
       if (editandoMascota) {
         // === actualizar ===
-        const url = 'http://127.0.0.1:8000/api/ActualizarMascotas';
         const formData = new FormData();
-        formData.append("id", editandoMascota.id); // Enviar el ID como parte del formData
+        formData.append("id", editandoMascota.id);
         formData.append("nombre", nombre);
         formData.append("edad", edad);
         formData.append("caracteristicas", caracteristicas);
         if (foto) formData.append("foto", foto);
         formData.append("_method", "PUT");
 
-        const response = await fetch(url, { method: "POST", body: formData });
+        const response = await apiFetch("/ActualizarMascotas", { method: "POST", body: formData });
 
         if (response.ok) {
           const updated = await response.json();
@@ -115,14 +115,13 @@ function BienvenidaFundacion() {
         }
       } else {
         // === crear ===
-        const url = `http://127.0.0.1:8000/api/CrearMascotas`;
         const formData = new FormData();
         formData.append("nombre", nombre);
         formData.append("edad", edad);
         formData.append("caracteristicas", caracteristicas);
         if (foto) formData.append("foto", foto);
 
-        const response = await fetch(url, { method: "POST", body: formData });
+        const response = await apiFetch("/CrearMascotas", { method: "POST", body: formData });
 
         if (response.ok) {
           const nueva = await response.json();
@@ -166,7 +165,7 @@ function BienvenidaFundacion() {
   const confirmarEliminarMascota = async () => {
   setIsProcessing(true);
   try {
-    await fetch("http://127.0.0.1:8000/api/EliminarMascotas", {
+    await apiFetch("/EliminarMascotas", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: confirmEliminar.id }),
