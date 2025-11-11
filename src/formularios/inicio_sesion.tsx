@@ -36,27 +36,27 @@ function Login() {
       localStorage.setItem("token", response.data.token);
     }
 
-    // Guardar tipo
+    // Normalizar tipo de usuario
+    const tipoNorm = response.data.tipo ? String(response.data.tipo).toLowerCase().trim() : null;
+    
+    if (!tipoNorm) {
+      console.error('No se detectó `tipo` en la respuesta del login. Payload completo:', response.data);
+      alert("Error: No se pudo identificar el tipo de usuario");
+      return;
+    }
 
-      // Normalizar tipo de usuario
-      const tipoNorm = response.data.tipo ? String(response.data.tipo).toLowerCase().trim() : null;
-      if (tipoNorm) {
-        // Guardar tipo normalizado
-        localStorage.setItem("tipo", tipoNorm);
+    // Guardar tipo normalizado
+    localStorage.setItem("tipo", tipoNorm);
 
-        // Redirigir según el tipo de usuario y pasar el nombre
-        if (tipoNorm === "usuario" || tipoNorm === "user" || tipoNorm === "persona" || tipoNorm === "person") {
-          navigate("/bienvenidaUsuario", { state: { nombre: response.data.nombre } });
-        } else if (tipoNorm === "fundacion" || tipoNorm === "fundación") {
-          navigate("/dashboard", { state: { nombre: response.data.nombre } });
-        } else {
-          console.warn('Tipo de usuario desconocido tras login:', tipoNorm);
-          navigate("/");
-        }
-      } else {
-        console.warn('No se detectó `tipo` en la respuesta del login. Payload completo:', response.data);
-        navigate("/");
-      }
+    // Redirigir según el tipo de usuario y pasar el nombre
+    if (tipoNorm === "usuario" || tipoNorm === "user" || tipoNorm === "persona" || tipoNorm === "person") {
+      navigate("/bienvenidaUsuario", { state: { nombre: response.data.nombre }, replace: true });
+    } else if (tipoNorm === "fundacion" || tipoNorm === "fundación") {
+      navigate("/dashboard", { state: { nombre: response.data.nombre }, replace: true });
+    } else {
+      console.error('Tipo de usuario desconocido tras login:', tipoNorm);
+      alert(`Error: Tipo de usuario desconocido (${tipoNorm})`);
+    }
   } catch (error: any) {
     console.error("Error en login:", error.response?.data || error.message);
     alert("Credenciales incorrectas o error en el servidor");
@@ -91,6 +91,7 @@ function Login() {
       >
         <div className="flex justify-center">
           <button
+            type="button"
             onClick={volverInicio}
             className="focus:outline-none"
             title="Volver al inicio"

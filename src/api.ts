@@ -21,9 +21,11 @@ export async function apiFetch(path: string, options?: RequestInit) {
     "/mascotas/aleatorias",
   ];
 
-  const isPublic = PUBLIC_PATH_SEGMENTS.some((seg) =>
-    finalPath.toLowerCase().includes(seg.toLowerCase())
-  );
+  const pathAfterApi = finalPath.replace(API_BASE, '').toLowerCase();
+  const isPublic = PUBLIC_PATH_SEGMENTS.some((seg) => 
+    pathAfterApi === seg.toLowerCase() || 
+    pathAfterApi.startsWith(seg.toLowerCase() + '/')
+);
 
   const defaultHeaders: Record<string, string> = {};
   if (token && !isPublic) {
@@ -36,7 +38,7 @@ export async function apiFetch(path: string, options?: RequestInit) {
   
   const mergedHeaders: Record<string, string> = {
     ...(options?.headers as Record<string, string>),
-    ...defaultHeaders,
+    ...defaultHeaders, // Authorization debe tener prioridad sobre headers personalizados
   };
 
   // Si es FormData, eliminar cualquier Content-Type que pudiera haberse establecido

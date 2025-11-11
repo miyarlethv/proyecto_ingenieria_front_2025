@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Eye, EyeOff, Pencil, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { apiFetch } from "../api";
 
 // ✅ Tipo Role con descripción opcional
 type Role = { id: number; name: string; descripcion?: string };
@@ -47,21 +48,25 @@ export default function GestionFuncionarios() {
 
   const cargarFuncionarios = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/ListarFuncionarios");
+      const res = await apiFetch("/ListarFuncionarios");
       const data = await res.json();
-      setFuncionarios(data);
+      console.log("📦 Funcionarios recibidos:", data);
+      setFuncionarios(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error al listar funcionarios:", error);
+      setFuncionarios([]);
     }
   };
 
   const cargarRoles = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/ListarRoles");
+      const res = await apiFetch("/ListarRoles");
       const data = await res.json();
-      setRoles(data);
+      console.log("📦 Roles recibidos:", data);
+      setRoles(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error al cargar roles:", error);
+      setRoles([]);
     }
   };
 
@@ -84,7 +89,7 @@ export default function GestionFuncionarios() {
     }
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/CrearFuncionario", {
+      const res = await apiFetch("/CrearFuncionario", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -137,7 +142,7 @@ export default function GestionFuncionarios() {
   // =========================
   const actualizarFuncionario = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/ActualizarFuncionario", {
+      const res = await apiFetch("/ActualizarFuncionario", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -164,7 +169,7 @@ export default function GestionFuncionarios() {
 
   const eliminarFuncionario = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/EliminarFuncionario", {
+      const res = await apiFetch("/EliminarFuncionario", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: modalConfirmacion.id }),
@@ -347,7 +352,7 @@ const ModalEmpleado = ({
           <option value="CC">Cédula de ciudadanía</option>
           <option value="TI">Tarjeta de identidad</option>
           <option value="CE">Cédula de extranjería</option>
-        </select>git
+        </select>
         <input
           type="text"
           name="nit"
