@@ -81,6 +81,12 @@ const CrearHistoria: React.FC = () => {
     obtenerMascotas();
   }, []);
 
+  // 🔹 Función auxiliar para usar mascotas
+  const obtenerNombreMascota = (id: number) => {
+    const mascota = mascotas.find((m) => m.id === id);
+    return mascota ? mascota.nombre : "Mascota";
+  };
+
   // 🔹 Abrir y cerrar modales
   const abrirModal = () => setIsModalOpen(true);
   const cerrarModal = () => {
