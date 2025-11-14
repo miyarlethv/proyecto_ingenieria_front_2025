@@ -1,11 +1,9 @@
 // imports
-import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Search, PlusCircle, Pencil, Trash2, CheckCircle2, X } from "lucide-react";
 import { apiFetch } from "../api";
 
 function BienvenidaFundacion() {
-  const navigate = useNavigate();
   
   // Estados de la UI
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -28,20 +26,6 @@ function BienvenidaFundacion() {
 
   
   const [busqueda, setBusqueda] = useState<string>("");
-
-  // Botón Volver
-  const manejarVolver = () => {
-    if (mostrarFormulario) {
-      setMostrarFormulario(false);
-      setEditandoMascota(null);
-      setNombre("");
-      setEdad("");
-      setCaracteristicas("");
-      setFoto(null);
-    } else {
-      navigate("/dashboard");
-    }
-  };
 
   // Cargar mascotas al inicio
   useEffect(() => {
@@ -97,9 +81,8 @@ function BienvenidaFundacion() {
         formData.append("edad", edad);
         formData.append("caracteristicas", caracteristicas);
         if (foto) formData.append("foto", foto);
-        formData.append("_method", "PUT");
 
-        const response = await apiFetch("/ActualizarMascotas", { method: "POST", body: formData });
+        const response = await apiFetch("ActualizarMascotas", { method: "POST", body: formData });
 
         if (response.ok) {
           const updated = await response.json();
@@ -184,11 +167,9 @@ function BienvenidaFundacion() {
 
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-
+    <div className="w-full">
       {/* Barra búsqueda + Agregar */}
-      <div className="flex justify-between items-center max-w-7xl mx-auto px-4 mt-8 mb-6">
+      <div className="flex justify-between items-center mb-6 mt-4">
         <div className="relative w-1/3">
           <Search className="absolute inset-y-0 left-3 my-auto text-gray-400" size={20} />
           <input
@@ -206,12 +187,6 @@ function BienvenidaFundacion() {
           >
             <PlusCircle size={22} className="text-white" />
             <span>Agregar mascota</span>
-          </button>
-          <button
-            onClick={manejarVolver}
-            className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
-          >
-            Volver
           </button>
         </div>
       </div>
@@ -353,10 +328,10 @@ function BienvenidaFundacion() {
       )}
 
       {/* Lista mascotas */}
-      <section className="pb-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+      <section className="w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filtroMascotas.map((mascota) => (
-            <div key={mascota.id} className="flex flex-col items-center border border-gray-300 rounded-lg p-4 shadow-sm">
+            <div key={mascota.id} className="flex flex-col items-center bg-white border border-gray-300 rounded-lg p-4 shadow-md">
               {mascota.foto ? (
                 <img src={`http://127.0.0.1:8000/storage/${mascota.foto}`} alt={mascota.nombre} className="w-24 h-24 object-cover mb-3 rounded-full" />
               ) : (

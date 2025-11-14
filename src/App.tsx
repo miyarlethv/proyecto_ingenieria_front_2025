@@ -12,24 +12,28 @@ import CrearHistoria from './formularios/crearHistoria';
 import GestionRoles from './formularios/gestionRoles';
 import GestionPermisos from './formularios/gestionPermisos';
 import CrearFuncionarios from './formularios/crearFuncionario';
+import DashboardLayout from './components/DashboardLayout';
 
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/* Rutas públicas */}
         <Route path="/registro" element={<RegistroFormulario />} />
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Index />} />
         <Route path="/bienvenidaUsuario" element={<BienvenidaUsuario />} />
-        <Route path="/bienvenidaFundacion" element={<BienvenidaFundacion />} />
-        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/recuperar-contraseña" element={<RecuperarContraseña />} />
-        <Route path="/HistoriaClinica" element={<HistoriaClinica />} />
-        <Route path="/crearHistoria/:mascotaId" element={<CrearHistoria />} />
-        <Route path="/GestionRoles" element={<GestionRoles />} />
-        <Route path="/GestionPermisos" element={<GestionPermisos />} />
-        <Route path="/CrearFuncionarios" element={<CrearFuncionarios />} />
+        
+        {/* Rutas administrativas con sidebar */}
+        <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+        <Route path="/bienvenidaFundacion" element={<DashboardLayout><BienvenidaFundacion /></DashboardLayout>} />
+        <Route path="/HistoriaClinica" element={<DashboardLayout><HistoriaClinica /></DashboardLayout>} />
+        <Route path="/crearHistoria/:mascotaId" element={<DashboardLayout><CrearHistoria /></DashboardLayout>} />
+        <Route path="/GestionRoles" element={<DashboardLayout><GestionRoles /></DashboardLayout>} />
+        <Route path="/GestionPermisos" element={<DashboardLayout><GestionPermisos /></DashboardLayout>} />
+        <Route path="/CrearFuncionarios" element={<DashboardLayout><CrearFuncionarios /></DashboardLayout>} />
 
       </Routes>
     </Router>

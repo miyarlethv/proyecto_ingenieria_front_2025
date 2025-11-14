@@ -233,7 +233,7 @@ export default function GestionPermisos() {
             }}
             className="bg-[#008658] text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
           >
-            Nuevo Permiso
+            Crear Permiso
           </button>
         </div>
 

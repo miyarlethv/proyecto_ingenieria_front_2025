@@ -266,7 +266,7 @@ export async function logout(): Promise<void> {
  */
 export const PERMISOS_SISTEMA = [
   { url: 'CrearMascotas', nombre: 'Crear Mascotas', icono: '🐾' },
-  { url: 'ActualizarMascotas', nombre: 'Editar Mascotas', icono: '✏️' },
+  { url: 'ActualizarMascotas', nombre: 'Editar mascotas', icono: '✏️' },
   { url: 'EliminarMascotas', nombre: 'Eliminar Mascotas', icono: '🗑️' },
   { url: 'CrearHistoriaClinica', nombre: 'Crear Historia Clínica', icono: '📋' },
   { url: 'ActualizarHistoriaClinica', nombre: 'Editar Historia Clínica', icono: '📝' },

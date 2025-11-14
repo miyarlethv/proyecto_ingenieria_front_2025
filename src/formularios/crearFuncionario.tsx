@@ -220,7 +220,7 @@ export default function GestionFuncionarios() {
             }}
             className="bg-[#008658] text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
           >
-            Nuevo Funcionario
+            Crear Funcionario
           </button>
         </div>
 
