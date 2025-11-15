@@ -12,27 +12,30 @@ import CrearHistoria from './formularios/crearHistoria';
 import GestionRoles from './formularios/gestionRoles';
 import GestionPermisos from './formularios/gestionPermisos';
 import CrearFuncionarios from './formularios/crearFuncionario';
-
+import InventarioFundacion from "./formularios/inventariofundacion";
+import Categorias from "./formularios/categorias";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/registro" element={<RegistroFormulario />} />
-        <Route path="/login" element={<Login />} />
         <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<RegistroFormulario />} />
+        <Route path="/recuperar-contraseña" element={<RecuperarContraseña />} />
         <Route path="/bienvenidaUsuario" element={<BienvenidaUsuario />} />
         <Route path="/bienvenidaFundacion" element={<BienvenidaFundacion />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/recuperar-contraseña" element={<RecuperarContraseña />} />
         <Route path="/HistoriaClinica" element={<HistoriaClinica />} />
         <Route path="/crearHistoria/:mascotaId" element={<CrearHistoria />} />
         <Route path="/GestionRoles" element={<GestionRoles />} />
         <Route path="/GestionPermisos" element={<GestionPermisos />} />
         <Route path="/CrearFuncionarios" element={<CrearFuncionarios />} />
-
+        <Route path="/inventariofundacion" element={<InventarioFundacion />} />
+        <Route path="/categorias" element={<Categorias />} />
       </Routes>
     </Router>
   );
 }
-export default App
+
+export default App;

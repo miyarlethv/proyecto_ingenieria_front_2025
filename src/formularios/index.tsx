@@ -53,7 +53,7 @@ function Index() {
 
   // 🔹 Llamada al backend (Laravel)
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/mascotas/aleatorias") // Ajusta la URL si tu backend usa otro puerto o ruta
+    fetch("http://127.0.0.1:8000/api/mascotas/aleatorias")
       .then((res) => res.json())
       .then((data) => {setMascotas(data); console.log(data);
       })
@@ -104,10 +104,7 @@ function Index() {
               >
                 <div className="w-28 h-28 rounded-full bg-gray-200 mb-3 overflow-hidden border border-gray-300">
                   <img
-                    src={
-                      mascota.nombre
-                        ? "http://127.0.0.1:8000/api/storage/${mascota.foto}"
-                        : "https://via.placeholder.com/150"
+                    src={ "http://127.0.0.1:8000/api/storage/${mascota.foto}"
                     }
                     alt={mascota.nombre}
                     className="w-full h-full object-cover"
