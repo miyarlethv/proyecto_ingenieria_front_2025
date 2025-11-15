@@ -1,7 +1,7 @@
 
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { Home, Users, Eye, Dog, NotebookPen, UserPlus, Shield } from "lucide-react";
+import { Home, Users, Eye, Dog, NotebookPen, UserPlus, Shield, Boxes, NotepadText, History, ChartPie } from "lucide-react";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -35,6 +35,15 @@ function Dashboard() {
         { nombre: "Crear usuario", ruta: "/CrearFuncionarios", icono: <UserPlus size={20} className="text-white" /> },
         { nombre: "Administrar roles", ruta: "/GestionRoles", icono: <Shield size={20} className="text-white" /> },
         { nombre: "Administrar permiso", ruta: "/GestionPermisos", icono: <Shield size={20} className="text-white" /> },
+      ],
+    },
+    {
+      nombre: "Inventario",
+      icono: <Boxes size={22} className="text-white" />,
+      subOpciones: [
+        { nombre: "Registro de Producto", ruta: "/inventariofundacion", icono: <NotepadText size={20} className="text-white" /> },
+        { nombre: "Registro de Categorias", ruta: "/categorias", icono: <History size={20} className="text-white" /> },
+        { nombre: "Grafica de inventario", ruta: "/", icono: <ChartPie size={20} className="text-white" /> },
       ],
     },
   ];
