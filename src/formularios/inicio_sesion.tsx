@@ -32,11 +32,16 @@ function Login() {
     setCargando(true);
 
     try {
-      const response = await apiFetch("/login", {
+      console.log("🔍 Intentando login con:", loginData.email); // Debug
+      
+      const response = await apiFetch("login", { // ✅ Sin slash, sin barra inicial
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginData),
       });
+
+      console.log("📡 Response status:", response.status); // Debug
+      console.log("📡 Response headers:", response.headers); // Debug
 
       const data = await response.json();
 

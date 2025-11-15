@@ -13,30 +13,32 @@ import GestionRoles from './formularios/gestionRoles';
 import GestionPermisos from './formularios/gestionPermisos';
 import CrearFuncionarios from './formularios/crearFuncionario';
 import DashboardLayout from './components/DashboardLayout';
-
+import InventarioFundacion from "./formularios/inventariofundacion";
+import Categorias from "./formularios/categorias";
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Rutas públicas */}
-        <Route path="/registro" element={<RegistroFormulario />} />
-        <Route path="/login" element={<Login />} />
         <Route path="/" element={<Index />} />
-        <Route path="/bienvenidaUsuario" element={<BienvenidaUsuario />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<RegistroFormulario />} />
         <Route path="/recuperar-contraseña" element={<RecuperarContraseña />} />
+        <Route path="/bienvenidaUsuario" element={<BienvenidaUsuario />} />
         
-        {/* Rutas administrativas con sidebar */}
+        {/* Rutas con DashboardLayout */}
         <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
-        <Route path="/bienvenidaFundacion" element={<DashboardLayout><BienvenidaFundacion /></DashboardLayout>} />
+        <Route path="/BienvenidaFundacion" element={<DashboardLayout><BienvenidaFundacion /></DashboardLayout>} />
         <Route path="/HistoriaClinica" element={<DashboardLayout><HistoriaClinica /></DashboardLayout>} />
         <Route path="/crearHistoria/:mascotaId" element={<DashboardLayout><CrearHistoria /></DashboardLayout>} />
         <Route path="/GestionRoles" element={<DashboardLayout><GestionRoles /></DashboardLayout>} />
         <Route path="/GestionPermisos" element={<DashboardLayout><GestionPermisos /></DashboardLayout>} />
         <Route path="/CrearFuncionarios" element={<DashboardLayout><CrearFuncionarios /></DashboardLayout>} />
-
+        <Route path="/inventariofundacion" element={<DashboardLayout><InventarioFundacion /></DashboardLayout>} />
+        <Route path="/categorias" element={<DashboardLayout><Categorias /></DashboardLayout>} />
       </Routes>
     </Router>
   );
 }
-export default App
+
+export default App;

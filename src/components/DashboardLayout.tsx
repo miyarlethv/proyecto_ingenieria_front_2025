@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
-import { Home, Users, Dog, NotebookPen, UserPlus, Shield } from "lucide-react";
+import { Home, Users, Dog, NotebookPen, UserPlus, Shield, Package } from "lucide-react";
 import { obtenerNombre, esFundacion, tienePermiso, logout } from "../api";
 
 interface DashboardLayoutProps {
@@ -65,6 +65,30 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
           ruta: "/GestionPermisos", 
           icono: <Shield size={20} className="text-white" />,
           permiso: "ListarPermisos"
+        },
+      ],
+    },
+    {
+      nombre: "Inventario",
+      icono: <Package size={22} className="text-white" />,
+      subOpciones: [
+        { 
+          nombre: "Registro de Producto", 
+          ruta: "/inventariofundacion", 
+          icono: <Package size={20} className="text-white" />,
+          permiso: "GestionarInventario"
+        },
+        { 
+          nombre: "Registro de Categorías", 
+          ruta: "/categorias", 
+          icono: <Shield size={20} className="text-white" />,
+          permiso: "GestionarInventario"
+        },
+        { 
+          nombre: "Gráfica de inventario", 
+          ruta: "/graficas-inventario", 
+          icono: <Home size={20} className="text-white" />,
+          permiso: "GestionarInventario"
         },
       ],
     },

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 interface Mascota {
   id: number;
   nombre: string;
-  foto?: string; // ✅ campo opcional para la imagen
+  foto?: string; //
 }
 
 const HistoriaClinica: React.FC = () => {
