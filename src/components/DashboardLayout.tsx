@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
-import { Home, Users, Dog, NotebookPen, UserPlus, Shield, Package } from "lucide-react";
+import { Home, Users, Dog, NotebookPen, UserPlus, Shield, Package, Heart, ClipboardList, Key } from "lucide-react";
 import { obtenerNombre, esFundacion, tienePermiso, logout } from "../api";
 
 interface DashboardLayoutProps {
@@ -21,7 +21,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   // Opciones del menú lateral con permisos
   const menu = [
     {
-      nombre: "Dashboard",
+      nombre: "Inicio",
       icono: <Home size={22} className="text-white" />,
       ruta: "/dashboard",
       permiso: null, // Siempre visible
@@ -45,6 +45,18 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
       ],
     },
     {
+      nombre: "Adopciones",
+      icono: <Heart size={22} className="text-white" />,
+      subOpciones: [
+        { 
+          nombre: "Solicitudes de adopción", 
+          ruta: "/solicitudes-adopcion", 
+          icono: <ClipboardList size={20} className="text-white" />,
+          permiso: "GestionarAdopciones"
+        },
+      ],
+    },
+    {
       nombre: "Usuarios",
       icono: <Users size={22} className="text-white" />,
       subOpciones: [
@@ -63,7 +75,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
         { 
           nombre: "Administrar permisos", 
           ruta: "/GestionPermisos", 
-          icono: <Shield size={20} className="text-white" />,
+          icono: <Key size={20} className="text-white" />,
           permiso: "ListarPermisos"
         },
       ],

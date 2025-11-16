@@ -15,6 +15,7 @@ import CrearFuncionarios from './formularios/crearFuncionario';
 import DashboardLayout from './components/DashboardLayout';
 import InventarioFundacion from "./formularios/inventariofundacion";
 import Categorias from "./formularios/categorias";
+import SolicitudAdopcion from "./formularios/solicitudAdopcion";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="/CrearFuncionarios" element={<DashboardLayout><CrearFuncionarios /></DashboardLayout>} />
         <Route path="/inventariofundacion" element={<DashboardLayout><InventarioFundacion /></DashboardLayout>} />
         <Route path="/categorias" element={<DashboardLayout><Categorias /></DashboardLayout>} />
+        <Route path="/solicitudes-adopcion" element={<DashboardLayout><SolicitudAdopcion /></DashboardLayout>} />
       </Routes>
     </Router>
   );

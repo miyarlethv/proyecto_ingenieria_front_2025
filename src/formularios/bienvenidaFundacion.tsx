@@ -31,7 +31,7 @@ function BienvenidaFundacion() {
   useEffect(() => {
     const fetchMascotas = async () => {
       try {
-        const response = await apiFetch("/mascotas");
+        const response = await apiFetch("mascotas");
         if (response.ok) {
           const data = await response.json();
           setMascotas(Array.isArray(data) ? data : data.data ?? []);
@@ -104,7 +104,7 @@ function BienvenidaFundacion() {
         formData.append("caracteristicas", caracteristicas);
         if (foto) formData.append("foto", foto);
 
-        const response = await apiFetch("/CrearMascotas", { method: "POST", body: formData });
+        const response = await apiFetch("CrearMascotas", { method: "POST", body: formData });
 
         if (response.ok) {
           const nueva = await response.json();
@@ -146,24 +146,34 @@ function BienvenidaFundacion() {
   };
 
   const confirmarEliminarMascota = async () => {
-  setIsProcessing(true);
-  try {
-    await apiFetch("/EliminarMascotas", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: confirmEliminar.id }),
-    });
+    setIsProcessing(true);
+    try {
+      const response = await apiFetch("EliminarMascotas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: confirmEliminar.id }),
+      });
 
-    // 🔹 Actualiza el estado local para quitar la mascota de la vista
-    setMascotas((prev) => prev.filter((m) => m.id !== confirmEliminar.id));
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error del backend:", errorData);
+        alert(`Error al eliminar: ${errorData.message || 'Error desconocido'}`);
+        setIsProcessing(false);
+        return;
+      }
 
-    setConfirmEliminar(null);
-  } catch (error) {
-    console.error("Error al deshabilitar la mascota:", error);
-  } finally {
-    setIsProcessing(false);
-  }
-};
+      // 🔹 Actualiza el estado local para quitar la mascota de la vista
+      setMascotas((prev) => prev.filter((m) => m.id !== confirmEliminar.id));
+
+      setConfirmEliminar(null);
+      console.log("✅ Mascota eliminada correctamente");
+    } catch (error) {
+      console.error("Error al eliminar la mascota:", error);
+      alert("Error al conectar con el servidor");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
 
   return (

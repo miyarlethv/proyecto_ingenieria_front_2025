@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Trash2, Pencil, CheckCircle2, AlertTriangle, Download } from "lucide-react";
 import { apiFetch } from "../api"; // 🔥 IMPORTAR apiFetch
 import jsPDF from "jspdf";
@@ -29,7 +29,6 @@ const CrearHistoria: React.FC = () => {
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [mascotas, setMascotas] = useState<Mascota[]>([]);
 
-  const navigate = useNavigate();
   const { mascotaId } = useParams();
 
   // 🔹 Interfaces
@@ -80,12 +79,6 @@ const CrearHistoria: React.FC = () => {
     obtenerFuncionarios();
     obtenerMascotas();
   }, []);
-
-  // 🔹 Función auxiliar para usar mascotas
-  const obtenerNombreMascota = (id: number) => {
-    const mascota = mascotas.find((m) => m.id === id);
-    return mascota ? mascota.nombre : "Mascota";
-  };
 
   // 🔹 Abrir y cerrar modales
   const abrirModal = () => setIsModalOpen(true);
@@ -462,7 +455,6 @@ const CrearHistoria: React.FC = () => {
           cerrarModal={cerrarModal}
           error={error}
           funcionarios={funcionarios}
-          mascotas={mascotas}
         />
       )}
 
@@ -476,7 +468,6 @@ const CrearHistoria: React.FC = () => {
           cerrarModal={cerrarEditModal}
           error={error}
           funcionarios={funcionarios}
-          mascotas={mascotas}
         />
       )}
 
@@ -514,7 +505,6 @@ interface ModalProps {
   cerrarModal: () => void;
   error: string;
   funcionarios: any[];
-  mascotas: any[];
 }
 
 const ModalHistoria: React.FC<ModalProps> = ({
@@ -525,7 +515,6 @@ const ModalHistoria: React.FC<ModalProps> = ({
   cerrarModal,
   error,
   funcionarios,
-  mascotas,
 }) => {
   console.log("🔍 Funcionarios en modal:", funcionarios);
   return (

@@ -109,13 +109,13 @@ function Index() {
         <nav className="flex gap-3">
           <button
             onClick={handleRegistroClick}
-            className="bg-white text-[#008658] border border-[#008658] px-4 py-2 rounded-xl font-medium hover:bg-[#8cceb7] hover:text-white transition shadow"
+            className="bg-white text-[#008658] border border-[#008658] px-4 py-2 rounded-xl font-medium hover:bg-[#a0a8a5] hover:text-white transition shadow"
           >
             Registrarme
           </button>
           <button
             onClick={handleLoginClick}
-            className="bg-white text-[#008658] border border-[#008658] px-4 py-2 rounded-xl font-medium hover:bg-[#8cceb7] hover:text-white transition shadow"
+            className="bg-white text-[#008658] border border-[#008658] px-4 py-2 rounded-xl font-medium hover:bg-[#a0a8a5] hover:text-white transition shadow"
           >
             Iniciar Sesión
           </button>

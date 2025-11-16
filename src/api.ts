@@ -19,6 +19,10 @@ export async function apiFetch(path: string, options?: RequestInit) {
     "/persona",
     "/login",
     "/mascotas/aleatorias",
+    "/mascotas",
+    "/productos",
+    "/categorias",
+    "/nombres",
   ];
 
   const pathAfterApi = finalPath.replace(API_BASE, '').toLowerCase();
@@ -260,34 +264,62 @@ export async function logout(): Promise<void> {
   }
 }
 
+// ============================================================
+// CATÁLOGO DE PERMISOS DEL SISTEMA
+// ============================================================
+
 /**
- * Obtener todos los permisos disponibles del sistema
- * (para mostrar opciones deshabilitadas)
+ * Permisos operativos del sistema (Mascotas, Historias Clínicas, Adopciones, Productos)
  */
 export const PERMISOS_SISTEMA = [
-  { url: 'CrearMascotas', nombre: 'Crear Mascotas', icono: '🐾' },
-  { url: 'ActualizarMascotas', nombre: 'Editar mascotas', icono: '✏️' },
-  { url: 'EliminarMascotas', nombre: 'Eliminar Mascotas', icono: '🗑️' },
-  { url: 'CrearHistoriaClinica', nombre: 'Crear Historia Clínica', icono: '📋' },
-  { url: 'ActualizarHistoriaClinica', nombre: 'Editar Historia Clínica', icono: '📝' },
-  { url: 'EliminarHistoriaClinica', nombre: 'Eliminar Historia Clínica', icono: '❌' },
-  { url: 'ListarHistoriasClinicas', nombre: 'Ver Historias Clínicas', icono: '📄' },
+  // Mascotas
+  { url: 'CrearMascotas', nombre: 'Crear Mascotas', categoria: 'Mascotas' },
+  { url: 'ActualizarMascotas', nombre: 'Editar Mascotas', categoria: 'Mascotas' },
+  { url: 'EliminarMascotas', nombre: 'Eliminar Mascotas', categoria: 'Mascotas' },
+  
+  // Historias Clínicas
+  { url: 'CrearHistoriaClinica', nombre: 'Crear Historia Clínica', categoria: 'Historias Clínicas' },
+  { url: 'ActualizarHistoriaClinica', nombre: 'Editar Historia Clínica', categoria: 'Historias Clínicas' },
+  { url: 'EliminarHistoriaClinica', nombre: 'Eliminar Historia Clínica', categoria: 'Historias Clínicas' },
+  { url: 'ListarHistoriasClinicas', nombre: 'Ver Historias Clínicas', categoria: 'Historias Clínicas' },
+  
+  // Solicitudes de Adopción
+  { url: 'solicitudes-adopcion', nombre: 'Gestionar Solicitudes de Adopción', categoria: 'Adopciones' },
+  
+  // Productos
+  { url: 'CrearProducto', nombre: 'Crear Productos', categoria: 'Productos' },
+  { url: 'ActualizarProducto', nombre: 'Editar Productos', categoria: 'Productos' },
+  { url: 'EliminarProducto', nombre: 'Eliminar Productos', categoria: 'Productos' },
+  
+  // Categorías
+  { url: 'CrearCategoria', nombre: 'Gestionar Categorías', categoria: 'Productos' },
 ];
 
 /**
- * Obtener permisos del sistema solo para administración (Fundación)
+ * Permisos administrativos (Roles, Permisos, Funcionarios)
+ * Solo accesibles para Fundación
  */
 export const PERMISOS_ADMIN = [
-  { url: 'CrearRol', nombre: 'Crear Roles', icono: '👥' },
-  { url: 'ListarRoles', nombre: 'Listar Roles', icono: '📋' },
-  { url: 'ActualizarRol', nombre: 'Editar Roles', icono: '✏️' },
-  { url: 'EliminarRol', nombre: 'Eliminar Roles', icono: '🗑️' },
-  { url: 'CrearPermiso', nombre: 'Crear Permisos', icono: '🔐' },
-  { url: 'ListarPermisos', nombre: 'Listar Permisos', icono: '📋' },
-  { url: 'ActualizarPermiso', nombre: 'Editar Permisos', icono: '✏️' },
-  { url: 'EliminarPermiso', nombre: 'Eliminar Permisos', icono: '🗑️' },
-  { url: 'CrearFuncionario', nombre: 'Crear Funcionarios', icono: '👤' },
-  { url: 'ListarFuncionarios', nombre: 'Listar Funcionarios', icono: '📋' },
-  { url: 'ActualizarFuncionario', nombre: 'Editar Funcionarios', icono: '✏️' },
-  { url: 'EliminarFuncionario', nombre: 'Eliminar Funcionarios', icono: '🗑️' },
+  // Roles
+  { url: 'CrearRol', nombre: 'Crear Roles', categoria: 'Roles' },
+  { url: 'ListarRoles', nombre: 'Listar Roles', categoria: 'Roles' },
+  { url: 'ActualizarRol', nombre: 'Editar Roles', categoria: 'Roles' },
+  { url: 'EliminarRol', nombre: 'Eliminar Roles', categoria: 'Roles' },
+  
+  // Permisos
+  { url: 'CrearPermiso', nombre: 'Crear Permisos', categoria: 'Permisos' },
+  { url: 'ListarPermisos', nombre: 'Listar Permisos', categoria: 'Permisos' },
+  { url: 'ActualizarPermiso', nombre: 'Editar Permisos', categoria: 'Permisos' },
+  { url: 'EliminarPermiso', nombre: 'Eliminar Permisos', categoria: 'Permisos' },
+  
+  // Funcionarios
+  { url: 'CrearFuncionario', nombre: 'Crear Funcionarios', categoria: 'Funcionarios' },
+  { url: 'ListarFuncionarios', nombre: 'Listar Funcionarios', categoria: 'Funcionarios' },
+  { url: 'ActualizarFuncionario', nombre: 'Editar Funcionarios', categoria: 'Funcionarios' },
+  { url: 'EliminarFuncionario', nombre: 'Eliminar Funcionarios', categoria: 'Funcionarios' },
 ];
+
+/**
+ * Todos los permisos del sistema (combinación de operativos y administrativos)
+ */
+export const TODOS_LOS_PERMISOS = [...PERMISOS_SISTEMA, ...PERMISOS_ADMIN];

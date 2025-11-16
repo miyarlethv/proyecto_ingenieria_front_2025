@@ -1,5 +1,4 @@
-
-import { Home, Users, Eye, Dog } from "lucide-react";
+import { Users, Eye, Dog } from "lucide-react";
 import { esFundacion } from "../api";
 
 function Dashboard() {
