@@ -1,4 +1,3 @@
-
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Home, Users, Eye, Dog, NotebookPen, UserPlus, Shield, Boxes, NotepadText, History, ChartPie } from "lucide-react";
@@ -10,9 +9,9 @@ function Dashboard() {
 
   // Tarjetas de resumen
   const stats = [
-    { color: "bg-yellow-500", value: 44, label: "Mascotas disponibles", icon: <Users size={32} /> },
-    { color: "bg-red-500", value: 65, label: "Visitas únicas", icon: <Eye size={32} /> },
-    { color: "bg-cyan-600", value: 12, label: "Últimos animales registrados", icon: <Dog size={32} /> },
+    { color: "bg-yellow-500", value: 44, label: "Mascotas disponibles", icon: <Users size={32} />, ruta: "/BienvenidaFundacion" },
+    { color: "bg-red-500", value: 65, label: "Gráfica de inventario", icon: <ChartPie size={32} />, ruta: "/graficaInventario" },
+    { color: "bg-cyan-600", value: 12, label: "Últimos animales registrados", icon: <Dog size={32} />, ruta: "/BienvenidaFundacion" },
   ];
 
   // Estado para cada desplegable
@@ -43,7 +42,7 @@ function Dashboard() {
       subOpciones: [
         { nombre: "Registro de Producto", ruta: "/inventariofundacion", icono: <NotepadText size={20} className="text-white" /> },
         { nombre: "Registro de Categorias", ruta: "/categorias", icono: <History size={20} className="text-white" /> },
-        { nombre: "Grafica de inventario", ruta: "/", icono: <ChartPie size={20} className="text-white" /> },
+        { nombre: "Grafica de inventario", ruta: "/graficaInventario", icono: <ChartPie size={20} className="text-white" /> },
       ],
     },
   ];
@@ -103,13 +102,25 @@ function Dashboard() {
         </header>
 
         {/* Tarjetas de resumen */}
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
           {stats.map((stat) => (
-            <div key={stat.label} className={`rounded-xl shadow-lg p-6 flex flex-col items-center text-white ${stat.color}`}>
+            <div 
+              key={stat.label} 
+              className={`rounded-xl shadow-lg p-6 flex flex-col items-center text-white ${stat.color} cursor-pointer hover:scale-105 transition-transform`}
+              onClick={() => stat.ruta && navigate(stat.ruta, { state: { nombre: nombreFundacion } })}
+            >
               <div className="text-4xl mb-2">{stat.icon}</div>
               <div className="text-2xl font-bold">{stat.value}</div>
               <div className="text-sm mt-2">{stat.label}</div>
-              <button className="mt-4 text-xs bg-white text-black px-3 py-1 rounded hover:bg-gray-200">Más info</button>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (stat.ruta) navigate(stat.ruta, { state: { nombre: nombreFundacion } });
+                }}
+                className="mt-4 text-xs bg-white text-black px-3 py-1 rounded hover:bg-gray-200"
+              >
+                Más info
+              </button>
             </div>
           ))}
         </div>

@@ -14,6 +14,7 @@ import GestionPermisos from './formularios/gestionPermisos';
 import CrearFuncionarios from './formularios/crearFuncionario';
 import InventarioFundacion from "./formularios/inventariofundacion";
 import Categorias from "./formularios/categorias";
+import GraficaInventario from "./formularios/graficaInventario";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path="/CrearFuncionarios" element={<CrearFuncionarios />} />
         <Route path="/inventariofundacion" element={<InventarioFundacion />} />
         <Route path="/categorias" element={<Categorias />} />
+        <Route path="/graficaInventario" element={<GraficaInventario />} />
       </Routes>
     </Router>
   );

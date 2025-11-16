@@ -1,4 +1,3 @@
-// imports
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Search, PlusCircle, Pencil, Trash2, CheckCircle2, X } from "lucide-react";
@@ -20,6 +19,7 @@ function InventarioFundacion() {
   // Listas maestras para desplegables
   const [categorias, setCategorias] = useState<any[]>([]);
   const [nombres, setNombres] = useState<any[]>([]);
+  const [nombresOriginales, setNombresOriginales] = useState<any[]>([]); // ✅ Lista completa
 
   // Formulario
   const [categoriaId, setCategoriaId] = useState("");
@@ -43,6 +43,19 @@ function InventarioFundacion() {
     }
   };
 
+  // ✅ Función para cargar productos (reutilizable)
+  const cargarProductos = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/productos");
+      if (response.ok) {
+        const data = await response.json();
+        setProductos(Array.isArray(data) ? data : data.data ?? []);
+      }
+    } catch (error) {
+      console.error("Error cargando productos:", error);
+    }
+  };
+
   // Cargar categorías y nombres para desplegables
   useEffect(() => {
     const fetchOpciones = async () => {
@@ -59,7 +72,9 @@ function InventarioFundacion() {
 
         if (resNombres.ok) {
           const dataNom = await resNombres.json();
-          setNombres(Array.isArray(dataNom) ? dataNom : dataNom.data ?? []);
+          const nombresData = Array.isArray(dataNom) ? dataNom : dataNom.data ?? [];
+          setNombresOriginales(nombresData); // ✅ Guardar lista completa
+          setNombres(nombresData);
         }
       } catch (error) {
         console.error("Error cargando opciones:", error);
@@ -68,26 +83,32 @@ function InventarioFundacion() {
     fetchOpciones();
   }, []);
 
-  // Cargar productos
+  // ✅ Cargar productos al montar componente
   useEffect(() => {
-    const fetchProductos = async () => {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/api/productos");
-        if (response.ok) {
-          const data = await response.json();
-          setProductos(Array.isArray(data) ? data : data.data ?? []);
-        }
-      } catch (error) {
-        console.error("Error cargando productos:", error);
-      }
-    };
-    fetchProductos();
+    cargarProductos();
   }, []);
 
   const filtroProductos = productos.filter((producto) =>
     producto.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
     producto.categoria?.toLowerCase().includes(busqueda.toLowerCase())
   );
+
+  // ✅ Filtrar nombres cuando cambia la categoría seleccionada
+  const handleCambioCategoria = (catId: string) => {
+    setCategoriaId(catId);
+    setNombreId(""); // Resetear producto seleccionado
+    
+    if (catId) {
+      // Filtrar solo productos de esa categoría
+      const nombresFiltrados = nombresOriginales.filter(
+        (nom) => String(nom.categoria_id) === String(catId)
+      );
+      setNombres(nombresFiltrados);
+    } else {
+      // Mostrar todos si no hay categoría seleccionada
+      setNombres(nombresOriginales);
+    }
+  };
 
   // Abrir formulario agregar
   const abrirAgregar = () => {
@@ -96,6 +117,7 @@ function InventarioFundacion() {
     setNombreId("");
     setCantidad("");
     setFoto(null);
+    setNombres(nombresOriginales); // ✅ Resetear lista completa
     setMostrarFormulario(true);
   };
 
@@ -109,7 +131,7 @@ function InventarioFundacion() {
     setMostrarFormulario(true);
   };
 
-  // Guardar o actualizar
+  // ✅ Guardar o actualizar con recarga automática
   const manejarSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsProcessing(true);
@@ -128,11 +150,8 @@ function InventarioFundacion() {
         const response = await fetch(url, { method: "POST", body: formData });
 
         if (response.ok) {
-          const updated = await response.json();
-          const updatedProducto = updated.data ?? updated;
-          setProductos((prev) =>
-            prev.map((p) => (p.id === editandoProducto.id ? updatedProducto : p))
-          );
+          // ✅ Recargar productos desde el servidor
+          await cargarProductos();
           setMostrarFormulario(false);
           setEditandoProducto(null);
           setMostrarModalExito(true);
@@ -151,9 +170,8 @@ function InventarioFundacion() {
         const response = await fetch(url, { method: "POST", body: formData });
 
         if (response.ok) {
-          const nuevo = await response.json();
-          const nuevoProducto = nuevo.data ?? nuevo;
-          setProductos((prev) => [...prev, nuevoProducto]);
+          // ✅ Recargar productos desde el servidor
+          await cargarProductos();
           setMostrarFormulario(false);
           setMostrarModalExito(true);
         } else {
@@ -186,6 +204,7 @@ function InventarioFundacion() {
     setConfirmEliminar(producto);
   };
 
+  // ✅ Confirmar eliminación con recarga automática
   const confirmarEliminarProducto = async () => {
     setIsProcessing(true);
     try {
@@ -194,7 +213,8 @@ function InventarioFundacion() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: confirmEliminar.id }),
       });
-      setProductos((prev) => prev.filter((p) => p.id !== confirmEliminar.id));
+      // ✅ Recargar productos desde el servidor
+      await cargarProductos();
       setConfirmEliminar(null);
     } catch (error) {
       console.error("Error al eliminar producto:", error);
@@ -246,7 +266,7 @@ function InventarioFundacion() {
               <select
                 id="categoria_id"
                 value={categoriaId}
-                onChange={(e) => setCategoriaId(e.target.value)}
+                onChange={(e) => handleCambioCategoria(e.target.value)}
                 className="border border-green-600 px-3 py-2 text-sm hover:bg-gray-100 rounded-[10px] w-full"
                 required
               >
@@ -373,8 +393,8 @@ function InventarioFundacion() {
                 className="w-32 h-32 object-cover mx-auto rounded-full mb-4"
               />
             )}
+            <h2 className="text-black mt-2">Categoría: {productoSeleccionado.categoria}</h2>
             <h2 className="text-xl font-bold">{productoSeleccionado.nombre}</h2>
-            <p className="text-black mt-2">Categoría: {productoSeleccionado.categoria}</p>
             <p className="text-black mt-2">Cantidad: {productoSeleccionado.cantidad}</p>
           </div>
         </div>
@@ -395,13 +415,12 @@ function InventarioFundacion() {
                 <div className="w-24 h-24 bg-gray-200 mb-3 rounded-full" />
               )}
               <div className="text-center w-full">
+                <p className="text-xs text-black font-medium">Categoría</p>
+                <p className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">{producto.categoria}</p>
                 <p className="text-xs text-black font-medium">Nombre</p>
                 <p className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">{producto.nombre}</p>
                 <p className="text-xs text-black font-medium">Cantidad</p>
                 <p className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">{producto.cantidad}</p>
-                <button onClick={() => setProductoSeleccionado(producto)} className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">
-                  Ver más...
-                </button>
                 <div className="flex items-center justify-center gap-3 mt-2">
                   <button onClick={() => abrirEditar(producto)} className="p-2 rounded-full hover:bg-gray-100 transition">
                     <Pencil size={20} className="text-black" />
