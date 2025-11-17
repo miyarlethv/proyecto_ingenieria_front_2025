@@ -6,7 +6,6 @@ function Categorias() {
   const navigate = useNavigate();
 
   // ==================== ESTADOS ====================
-  // Estados UI
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [tipoFormulario, setTipoFormulario] = useState<"categoria" | "nombre">("categoria");
   const [mostrarModalExito, setMostrarModalExito] = useState(false);
@@ -21,39 +20,43 @@ function Categorias() {
   // Formulario
   const [categoria, setCategoria] = useState("");
   const [nombre, setNombre] = useState("");
+  const [categoriaId, setCategoriaId] = useState("");
   const [busqueda, setBusqueda] = useState("");
 
-  // ==================== EFECTOS ====================
-  // Cargar categorías y nombres al montar el componente
-  useEffect(() => {
-    const fetchDatos = async () => {
-      try {
-        const resCategorias = await fetch("http://127.0.0.1:8000/api/categorias");
-        const resNombres = await fetch("http://127.0.0.1:8000/api/nombres");
-        
-        if (resCategorias.ok) {
-          const data = await resCategorias.json();
-          setCategorias(Array.isArray(data) ? data : data.data ?? []);
-        }
-        
-        if (resNombres.ok) {
-          const data = await resNombres.json();
-          setNombres(Array.isArray(data) ? data : data.data ?? []);
-        }
-      } catch (error) {
-        console.error("Error cargando datos:", error);
+  // ==================== CARGAR DATOS ====================
+  const cargarCategorias = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/categorias");
+      if (response.ok) {
+        const data = await response.json();
+        setCategorias(Array.isArray(data) ? data : data.data ?? []);
       }
-    };
-    fetchDatos();
+    } catch (error) {
+      console.error("Error cargando categorías:", error);
+    }
+  };
+
+  const cargarNombres = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/nombres");
+      if (response.ok) {
+        const data = await response.json();
+        setNombres(Array.isArray(data) ? data : data.data ?? []);
+      }
+    } catch (error) {
+      console.error("Error cargando nombres:", error);
+    }
+  };
+
+  useEffect(() => {
+    cargarCategorias();
+    cargarNombres();
   }, []);
 
   // ==================== FILTROS ====================
-  const filtroCategorias = categorias.filter((cat) =>
-    cat.categoria?.toLowerCase().includes(busqueda.toLowerCase())
-  );
-
   const filtroNombres = nombres.filter((nom) =>
-    nom.nombre?.toLowerCase().includes(busqueda.toLowerCase())
+    nom.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
+    nom.categoria?.toLowerCase().includes(busqueda.toLowerCase())
   );
 
   // ==================== HANDLERS - NAVEGACIÓN ====================
@@ -63,6 +66,7 @@ function Categorias() {
       setEditandoItem(null);
       setCategoria("");
       setNombre("");
+      setCategoriaId("");
     } else {
       navigate("/dashboard");
     }
@@ -80,6 +84,7 @@ function Categorias() {
     setTipoFormulario("nombre");
     setEditandoItem(null);
     setNombre("");
+    setCategoriaId("");
     setMostrarFormulario(true);
   };
 
@@ -95,6 +100,7 @@ function Categorias() {
     setTipoFormulario("nombre");
     setEditandoItem(nom);
     setNombre(nom.nombre ?? "");
+    setCategoriaId(String(nom.categoria_id ?? ""));
     setMostrarFormulario(true);
   };
 
@@ -106,7 +112,6 @@ function Categorias() {
     try {
       if (tipoFormulario === "categoria") {
         if (editandoItem) {
-          // Actualizar categoría
           const response = await fetch("http://127.0.0.1:8000/api/ActualizarCategoria", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -114,19 +119,16 @@ function Categorias() {
           });
 
           if (response.ok) {
-            const updated = await response.json();
-            const updatedCategoria = updated.data ?? updated;
-            setCategorias((prev) =>
-              prev.map((c) => (c.id === editandoItem.id ? updatedCategoria : c))
-            );
+            // ✅ Recargar categorías automáticamente
+            await cargarCategorias();
             setMostrarFormulario(false);
             setEditandoItem(null);
+            setCategoria("");
             setMostrarModalExito(true);
           } else {
             alert("Error al actualizar la categoría");
           }
         } else {
-          // Crear categoría
           const response = await fetch("http://127.0.0.1:8000/api/CrearCategoria", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -134,53 +136,52 @@ function Categorias() {
           });
 
           if (response.ok) {
-            const nuevo = await response.json();
-            const nuevaCategoria = nuevo.data ?? nuevo;
-            setCategorias((prev) => [...prev, nuevaCategoria]);
+            // ✅ Recargar categorías automáticamente
+            await cargarCategorias();
             setMostrarFormulario(false);
+            setCategoria("");
             setMostrarModalExito(true);
           } else {
             alert("Error al guardar la categoría");
           }
         }
       } else {
-        // Nombre
+        // PRODUCTOS
         if (editandoItem) {
-          // Actualizar nombre
           const response = await fetch("http://127.0.0.1:8000/api/ActualizarNombre", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: editandoItem.id, nombre }),
+            body: JSON.stringify({ 
+              id: editandoItem.id, 
+              nombre,
+              categoria_id: categoriaId 
+            }),
           });
 
           if (response.ok) {
-            const updated = await response.json();
-            const updatedNombre = updated.data ?? updated;
-            setNombres((prev) =>
-              prev.map((n) => (n.id === editandoItem.id ? updatedNombre : n))
-            );
+            await cargarNombres();
             setMostrarFormulario(false);
             setEditandoItem(null);
             setMostrarModalExito(true);
           } else {
-            alert("Error al actualizar el nombre");
+            alert("Error al actualizar el producto");
           }
         } else {
-          // Crear nombre
           const response = await fetch("http://127.0.0.1:8000/api/CrearNombre", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nombre }),
+            body: JSON.stringify({ 
+              nombre,
+              categoria_id: categoriaId 
+            }),
           });
 
           if (response.ok) {
-            const nuevo = await response.json();
-            const nuevoNombre = nuevo.data ?? nuevo;
-            setNombres((prev) => [...prev, nuevoNombre]);
+            await cargarNombres();
             setMostrarFormulario(false);
             setMostrarModalExito(true);
           } else {
-            alert("Error al guardar el nombre");
+            alert("Error al guardar el producto");
           }
         }
       }
@@ -191,6 +192,7 @@ function Categorias() {
       setIsProcessing(false);
       setCategoria("");
       setNombre("");
+      setCategoriaId("");
     }
   };
 
@@ -213,9 +215,9 @@ function Categorias() {
       });
 
       if (confirmEliminar.tipo === "categoria") {
-        setCategorias((prev) => prev.filter((c) => c.id !== confirmEliminar.id));
+        await cargarCategorias();
       } else {
-        setNombres((prev) => prev.filter((n) => n.id !== confirmEliminar.id));
+        await cargarNombres();
       }
       setConfirmEliminar(null);
     } catch (error) {
@@ -228,9 +230,8 @@ function Categorias() {
   // ==================== RENDER ====================
   return (
     <div className="min-h-screen bg-white">
-      {/* ========== BARRA DE BÚSQUEDA Y BOTÓN VOLVER ========== */}
+      {/* BARRA DE BÚSQUEDA Y BOTÓN VOLVER */}
       <div className="flex justify-between items-center max-w-7xl mx-auto px-4 mt-8 mb-6">
-        {/* Búsqueda */}
         <div className="relative w-1/3">
           <Search className="absolute inset-y-0 left-3 my-auto text-gray-400" size={20} />
           <input
@@ -242,16 +243,31 @@ function Categorias() {
           />
         </div>
 
-        {/* Botón Volver */}
-        <button
-          onClick={manejarVolver}
-          className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
-        >
-          Volver
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={abrirAgregarCategoria}
+            className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
+          >
+            <PlusCircle size={22} />
+            <span>Agregar Categoría</span>
+          </button>
+          <button
+            onClick={abrirAgregarNombre}
+            className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
+          >
+            <PlusCircle size={22} />
+            <span>Agregar Producto</span>
+          </button>
+          <button
+            onClick={manejarVolver}
+            className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
+          >
+            Volver
+          </button>
+        </div>
       </div>
 
-      {/* ========== MODAL FORMULARIO ========== */}
+      {/* MODAL FORMULARIO */}
       {mostrarFormulario && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
@@ -271,14 +287,29 @@ function Categorias() {
                   required
                 />
               ) : (
-                <input
-                  type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  placeholder="Nombre del producto"
-                  className="border border-green-600 px-3 py-2 text-sm rounded-xl w-full"
-                  required
-                />
+                <>
+                  <select
+                    value={categoriaId}
+                    onChange={(e) => setCategoriaId(e.target.value)}
+                    className="border border-green-600 px-3 py-2 text-sm rounded-xl w-full"
+                    required
+                  >
+                    <option value="">Selecciona una categoría</option>
+                    {categorias.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.categoria}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={nombre}
+                    onChange={(e) => setNombre(e.target.value)}
+                    placeholder="Nombre del producto"
+                    className="border border-green-600 px-3 py-2 text-sm rounded-xl w-full"
+                    required
+                  />
+                </>
               )}
 
               <div className="flex justify-end gap-3 mt-4">
@@ -303,7 +334,7 @@ function Categorias() {
         </div>
       )}
 
-      {/* ========== MODAL CONFIRMAR ELIMINAR ========== */}
+      {/* MODAL CONFIRMAR ELIMINAR */}
       {confirmEliminar && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg text-center">
@@ -332,7 +363,7 @@ function Categorias() {
         </div>
       )}
 
-      {/* ========== MODAL ÉXITO ========== */}
+      {/* MODAL ÉXITO */}
       {mostrarModalExito && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg text-center">
@@ -349,93 +380,42 @@ function Categorias() {
         </div>
       )}
 
-      {/* ========== TABLAS DE DATOS ========== */}
+      {/* TABLA UNIFICADA DE PRODUCTOS */}
       <section className="pb-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 gap-8">
-          {/* TABLA CATEGORÍAS */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Categorías</h3>
-              <div className="flex gap-2">
-                <button 
-                  onClick={abrirAgregarCategoria}
-                  className="p-2 rounded-full bg-[#008658] hover:bg-green-700 transition"
-                  title="Agregar categoría"
-                >
-                  <PlusCircle size={20} className="text-white" />
-                </button>
-              </div>
-            </div>
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-[#008658] text-white">
-                  <th className="border border-gray-300 px-4 py-2">Categoría</th>
+        <div className="max-w-7xl mx-auto px-4">
+          <h3 className="text-xl font-bold mb-4">Productos por Categoría</h3>
+          <table className="w-full border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-[#008658] text-white">
+                <th className="border border-gray-300 px-4 py-2 text-left">Categoría</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Producto</th>
+                <th className="border border-gray-300 px-4 py-2 w-24">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtroNombres.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                    No hay productos registrados
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filtroCategorias.map((cat) => (
-                  <tr key={cat.id} className="hover:bg-gray-50">
-                    <td className="border border-gray-300 px-4 py-2 flex justify-between items-center">
-                      <span>{cat.categoria}</span>
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => abrirEditarCategoria(cat)} 
-                          className="p-1 rounded-full hover:bg-gray-100 transition"
-                          title="Editar"
-                        >
-                          <Pencil size={18} className="text-black" />
-                        </button>
-                        <button 
-                          onClick={() => handleEliminar(cat, "categoria")} 
-                          className="p-1 rounded-full hover:bg-gray-100 transition"
-                          title="Eliminar"
-                        >
-                          <Trash2 size={18} className="text-red-600" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* TABLA PRODUCTOS */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Productos</h3>
-              <div className="flex gap-2">
-                <button 
-                  onClick={abrirAgregarNombre}
-                  className="p-2 rounded-full bg-[#008658] hover:bg-green-700 transition"
-                  title="Agregar producto"
-                >
-                  <PlusCircle size={20} className="text-white" />
-                </button>
-              </div>
-            </div>
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-[#008658] text-white">
-                  <th className="border border-gray-300 px-4 py-2">Producto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtroNombres.map((nom) => (
+              ) : (
+                filtroNombres.map((nom) => (
                   <tr key={nom.id} className="hover:bg-gray-50">
-                    <td className="border border-gray-300 px-4 py-2 flex justify-between items-center">
-                      <span>{nom.nombre}</span>
-                      <div className="flex gap-2">
+                    <td className="border border-gray-300 px-4 py-2">{nom.categoria}</td>
+                    <td className="border border-gray-300 px-4 py-2">{nom.nombre}</td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      <div className="flex justify-center gap-2">
                         <button 
                           onClick={() => abrirEditarNombre(nom)} 
-                          className="p-1 rounded-full hover:bg-gray-100 transition"
+                          className="p-1 rounded-full hover:bg-gray-200 transition"
                           title="Editar"
                         >
                           <Pencil size={18} className="text-black" />
                         </button>
                         <button 
                           onClick={() => handleEliminar(nom, "nombre")} 
-                          className="p-1 rounded-full hover:bg-gray-100 transition"
+                          className="p-1 rounded-full hover:bg-gray-200 transition"
                           title="Eliminar"
                         >
                           <Trash2 size={18} className="text-red-600" />
@@ -443,10 +423,10 @@ function Categorias() {
                       </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
     </div>

@@ -15,6 +15,7 @@ import CrearFuncionarios from './formularios/crearFuncionario';
 import DashboardLayout from './components/DashboardLayout';
 import InventarioFundacion from "./formularios/inventariofundacion";
 import Categorias from "./formularios/categorias";
+import GraficaInventario from "./formularios/graficaInventario";
 import SolicitudAdopcion from "./formularios/solicitudAdopcion";
 
 function App() {
@@ -26,8 +27,6 @@ function App() {
         <Route path="/registro" element={<RegistroFormulario />} />
         <Route path="/recuperar-contraseña" element={<RecuperarContraseña />} />
         <Route path="/bienvenidaUsuario" element={<BienvenidaUsuario />} />
-        
-        {/* Rutas con DashboardLayout */}
         <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
         <Route path="/BienvenidaFundacion" element={<DashboardLayout><BienvenidaFundacion /></DashboardLayout>} />
         <Route path="/HistoriaClinica" element={<DashboardLayout><HistoriaClinica /></DashboardLayout>} />
@@ -37,6 +36,7 @@ function App() {
         <Route path="/CrearFuncionarios" element={<DashboardLayout><CrearFuncionarios /></DashboardLayout>} />
         <Route path="/inventariofundacion" element={<DashboardLayout><InventarioFundacion /></DashboardLayout>} />
         <Route path="/categorias" element={<DashboardLayout><Categorias /></DashboardLayout>} />
+        <Route path="/graficas-inventario" element={<DashboardLayout><GraficaInventario /></DashboardLayout>} />
         <Route path="/solicitudes-adopcion" element={<DashboardLayout><SolicitudAdopcion /></DashboardLayout>} />
       </Routes>
     </Router>
