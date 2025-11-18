@@ -2,10 +2,14 @@ import React, { useState, useEffect } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import { Trash2, Pencil, CheckCircle2, AlertTriangle, Download } from "lucide-react";
-import { apiFetch } from "../api"; // 🔥 IMPORTAR apiFetch
+import { apiFetch, tienePermiso } from "../api";
 import jsPDF from "jspdf";
+import ModalError from "../components/ModalError";
+import { useModalError } from "../hooks/useModalError";
 
 const CrearHistoria: React.FC = () => {
+  const { modalError, mostrarError, cerrarError } = useModalError();
+  
   // 🔹 Estados
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -81,7 +85,13 @@ const CrearHistoria: React.FC = () => {
   }, []);
 
   // 🔹 Abrir y cerrar modales
-  const abrirModal = () => setIsModalOpen(true);
+  const abrirModal = () => {
+    if (!tienePermiso('CrearHistoriaClinica')) {
+      mostrarError("No tienes permiso para crear historias clínicas");
+      return;
+    }
+    setIsModalOpen(true);
+  };
   const cerrarModal = () => {
     setIsModalOpen(false);
     setError("");
@@ -205,6 +215,10 @@ const CrearHistoria: React.FC = () => {
 
   // 🔹 Confirmar eliminación
   const confirmarEliminar = (id: number) => {
+    if (!tienePermiso('EliminarHistoriaClinica')) {
+      mostrarError("No tienes permiso para eliminar historias clínicas");
+      return;
+    }
     setModalConfirmacion({ tipo: "eliminar", historiaId: id });
   };
 
@@ -234,12 +248,16 @@ const CrearHistoria: React.FC = () => {
       cargarHistorias();
     } catch (err) {
       console.error("❌ Error al eliminar:", err);
-      alert("Error al eliminar la historia clínica");
+      mostrarError("Error al eliminar la historia clínica. Verifica que tengas los permisos necesarios.");
     }
   };
 
   // 🔹 Abrir modal de edición
   const abrirModalEditar = (historia: any) => {
+    if (!tienePermiso('ActualizarHistoriaClinica')) {
+      mostrarError("No tienes permiso para editar historias clínicas");
+      return;
+    }
     setEditData(historia);
     setIsEditModalOpen(true);
   };
@@ -270,14 +288,14 @@ const CrearHistoria: React.FC = () => {
       cargarHistorias();
     } catch (err) {
       console.error("❌ Error al actualizar:", err);
-      alert("Ocurrió un error al actualizar");
+      mostrarError("Ocurrió un error al actualizar. Verifica que tengas los permisos necesarios.");
     }
   };
 
   // 🔹 Descargar historias clínicas en PDF
   const descargarPDF = async () => {
     if (historias.length === 0) {
-      alert("No hay historias clínicas para descargar");
+      mostrarError("No hay historias clínicas para descargar");
       return;
     }
 
@@ -367,7 +385,7 @@ const CrearHistoria: React.FC = () => {
       doc.save(`Historia_Clinica_${nombreMascota}_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
       console.error("Error al generar PDF:", error);
-      alert("Error al generar el PDF");
+      mostrarError("Error al generar el PDF");
     }
   };
 
@@ -386,6 +404,7 @@ const CrearHistoria: React.FC = () => {
               <Download size={18} />
               Descargar PDF
             </button>
+            
             <button
               onClick={abrirModal}
               className="bg-[#008658] text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
@@ -410,7 +429,7 @@ const CrearHistoria: React.FC = () => {
           <tbody>
             {historias.length > 0 ? (
               historias.map((historia) => (
-                 <tr key={historia.id} className="border-b hover:bg-gray-50">
+                <tr key={historia.id} className="border-b hover:bg-gray-50">
                   <td className="p-2 text-center">{historia.fecha}</td>
                   <td className="p-2">{historia.tipo}</td>
                   <td className="p-2">{historia.descripcion}</td>
@@ -424,6 +443,7 @@ const CrearHistoria: React.FC = () => {
                     >
                       <Pencil size={20} />
                     </button>
+                    
                     <button
                       onClick={() => confirmarEliminar(historia.id)}
                       className="text-red-600 hover:text-red-800"
@@ -485,7 +505,15 @@ const CrearHistoria: React.FC = () => {
       )}
 
       {/* 🟢 Modal de éxito */}
-      {mostrarModalExito && <ModalExito cerrarModal={cerrarModalExito} />}
+      {mostrarModalExito && <ModalExito cerrarModal={() => setMostrarModalExito(false)} />}
+
+      {/* Modal de error */}
+      <ModalError
+        mostrar={modalError.mostrar}
+        titulo={modalError.titulo}
+        mensaje={modalError.mensaje}
+        onCerrar={cerrarError}
+      />
     </div>
   );
 };

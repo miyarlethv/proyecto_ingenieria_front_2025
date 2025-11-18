@@ -166,7 +166,7 @@ function Login() {
         </div>
 
         {/* Enlace recuperar contraseña */}
-        <div className="text-right">
+        {/* <div className="text-right">
           <button
             type="button"
             onClick={recuperarContraseña}
@@ -175,7 +175,7 @@ function Login() {
           >
             ¿Olvidaste tu contraseña?
           </button>
-        </div>
+        </div> */}
 
         <button
           type="submit"

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { apiFetch, TODOS_LOS_PERMISOS } from "../api";
+import { apiFetch, TODOS_LOS_PERMISOS, tienePermiso } from "../api";
 import type { ChangeEvent, FormEvent } from "react";
 import { Pencil, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
+import ModalError from "../components/ModalError";
+import { useModalError } from "../hooks/useModalError";
 
 export default function GestionPermisos() {
+  const { modalError, mostrarError, cerrarError } = useModalError();
   const [permisos, setPermisos] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -67,7 +70,7 @@ export default function GestionPermisos() {
     console.log("👤 Tipo de usuario:", tipo);
     
     if (!token || tipo !== "fundacion") {
-      alert("Debes iniciar sesión como fundación para crear permisos");
+      mostrarError("Debes iniciar sesión como fundación para crear permisos");
       window.location.href = "/inicio_sesion";
       return;
     }
@@ -105,7 +108,7 @@ export default function GestionPermisos() {
         console.error("Content-Type:", contentType);
         console.error("Respuesta completa:", text.substring(0, 500));
         
-        alert(`Error del servidor (${response.status}):\n${response.statusText}\n\nVerifica la consola para más detalles.`);
+        mostrarError(`Error del servidor (${response.status}):\n${response.statusText}\n\nVerifica la consola para más detalles.`);
         return;
       }
 
@@ -116,7 +119,7 @@ export default function GestionPermisos() {
       } catch (jsonError) {
         console.error("❌ Error al parsear JSON:", jsonError);
         console.error("Texto recibido:", text.substring(0, 500));
-        alert("El servidor devolvió una respuesta inválida. Verifica la consola.");
+        mostrarError("El servidor devolvió una respuesta inválida. Verifica la consola.");
         return;
       }
 
@@ -126,14 +129,14 @@ export default function GestionPermisos() {
         setMostrarModalExito(true);
         cargarPermisos();
       } else {
-        alert(data.message || "Error al crear el permiso");
+        mostrarError(data.message || "Error al crear el permiso. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
       console.error("❌ Error al crear permiso:", error);
       if (error instanceof Error) {
-        alert(`Error: ${error.message}`);
+        mostrarError(`Error: ${error.message}`);
       } else {
-        alert("Error al conectar con el servidor");
+        mostrarError("Error al conectar con el servidor");
       }
     }
   };
@@ -142,6 +145,10 @@ export default function GestionPermisos() {
   // 🔹 Abrir modal editar
   // =========================
   const abrirEditar = (permiso: any) => {
+    if (!tienePermiso('ActualizarPermiso')) {
+      mostrarError("No tienes permiso para editar permisos");
+      return;
+    }
     setFormData({
       id: permiso.id,
       name: permiso.name,
@@ -179,11 +186,11 @@ export default function GestionPermisos() {
         setMostrarModalExito(true);
         cargarPermisos();
       } else {
-        alert(data.message || "Error al actualizar el permiso");
+        mostrarError(data.message || "Error al actualizar el permiso. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
       console.error("Error al actualizar permiso:", error);
-      alert("Error al conectar con el servidor");
+      mostrarError("Error al conectar con el servidor");
     }
   };
 
@@ -208,11 +215,11 @@ export default function GestionPermisos() {
         setMostrarModalExito(true);
         cargarPermisos();
       } else {
-        alert(data.message || "Error al eliminar el permiso");
+        mostrarError(data.message || "Error al eliminar el permiso. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
       console.error("Error al eliminar permiso:", error);
-      alert("Error al conectar con el servidor");
+      mostrarError("Error al conectar con el servidor");
     }
   };
 
@@ -321,6 +328,14 @@ export default function GestionPermisos() {
       {mostrarModalExito && (
         <ModalExito cerrarModal={() => setMostrarModalExito(false)} />
       )}
+
+      {/* Modal de error */}
+      <ModalError
+        mostrar={modalError.mostrar}
+        titulo={modalError.titulo}
+        mensaje={modalError.mensaje}
+        onCerrar={cerrarError}
+      />
     </div>
   );
 }

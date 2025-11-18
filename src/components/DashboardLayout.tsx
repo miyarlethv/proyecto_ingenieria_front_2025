@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
 import type { ReactNode } from "react";
-import { Home, Users, Dog, NotebookPen, UserPlus, Shield, Package, Heart, ClipboardList, Key } from "lucide-react";
+import { Home, Users, Dog, NotebookPen, UserPlus, Shield, Package, Heart, ClipboardList, Key, AlertTriangle, X } from "lucide-react";
 import { obtenerNombre, esFundacion, tienePermiso, logout } from "../api";
 
 interface DashboardLayoutProps {
@@ -12,6 +13,12 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const nombreUsuario = obtenerNombre() || location.state?.nombre || "Usuario";
   const esAdmin = esFundacion();
+  
+  // Estado para modal de permisos
+  const [modalPermiso, setModalPermiso] = useState<{ mostrar: boolean; mensaje: string }>({
+    mostrar: false,
+    mensaje: ""
+  });
 
   // Función para verificar si una opción está habilitada
   const estaHabilitado = (permiso: string) => {
@@ -34,13 +41,13 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
           nombre: "Registro de mascotas", 
           ruta: "/BienvenidaFundacion", 
           icono: <Dog size={20} className="text-white" />,
-          permiso: "CrearMascotas"
+          permiso: "CrearMascotas" // ✅ Correcto
         },
         { 
           nombre: "Agregar historia clínica", 
           ruta: "/HistoriaClinica", 
           icono: <NotebookPen size={20} className="text-white" />,
-          permiso: "ListarHistoriasClinicas"
+          permiso: "CrearHistoriaClinica" // ✅ CORREGIDO - era "ListarHistoriasClinicas"
         },
       ],
     },
@@ -52,7 +59,7 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
           nombre: "Solicitudes de adopción", 
           ruta: "/solicitudes-adopcion", 
           icono: <ClipboardList size={20} className="text-white" />,
-          permiso: "GestionarAdopciones"
+          permiso: "solicitudes-adopcion" // ✅ CORREGIDO - coincide con api.ts
         },
       ],
     },
@@ -64,19 +71,19 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
           nombre: "Crear usuario", 
           ruta: "/CrearFuncionarios", 
           icono: <UserPlus size={20} className="text-white" />,
-          permiso: "CrearFuncionario"
+          permiso: "CrearFuncionario" // ✅ Correcto
         },
         { 
           nombre: "Administrar roles", 
           ruta: "/GestionRoles", 
           icono: <Shield size={20} className="text-white" />,
-          permiso: "ListarRoles"
+          permiso: "ListarRoles" // ✅ Correcto
         },
         { 
           nombre: "Administrar permisos", 
           ruta: "/GestionPermisos", 
           icono: <Key size={20} className="text-white" />,
-          permiso: "ListarPermisos"
+          permiso: "ListarPermisos" // ✅ Correcto
         },
       ],
     },
@@ -88,19 +95,19 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
           nombre: "Registro de Producto", 
           ruta: "/inventariofundacion", 
           icono: <Package size={20} className="text-white" />,
-          permiso: "GestionarInventario"
+          permiso: "CrearProducto" // ✅ CORREGIDO - coincide con api.ts
         },
         { 
           nombre: "Registro de Categorías", 
           ruta: "/categorias", 
           icono: <Shield size={20} className="text-white" />,
-          permiso: "GestionarInventario"
+          permiso: "CrearCategoria" // ✅ CORREGIDO - coincide con api.ts
         },
         { 
           nombre: "Gráfica de inventario", 
           ruta: "/graficas-inventario", 
           icono: <Home size={20} className="text-white" />,
-          permiso: "GestionarInventario"
+          permiso: "CrearProducto" // ✅ Usa el mismo permiso de productos
         },
       ],
     },
@@ -114,7 +121,10 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
   // Manejar clic en sub-opción con validación de permisos
   const handleSubOpcionClick = (subOpcion: any) => {
     if (!estaHabilitado(subOpcion.permiso)) {
-      alert(`⛔ No tienes permiso para acceder a "${subOpcion.nombre}"`);
+      setModalPermiso({
+        mostrar: true,
+        mensaje: `No tienes permiso para acceder a "${subOpcion.nombre}"`
+      });
       return;
     }
     navigate(subOpcion.ruta, { state: { nombre: nombreUsuario } });
@@ -205,6 +215,35 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
       <main className="flex-1 ml-64 p-4 overflow-auto">
         {children}
       </main>
+
+      {/* Modal de permiso denegado */}
+      {modalPermiso.mostrar && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={24} className="text-red-600" />
+                <h3 className="text-lg font-semibold text-gray-800">Acceso Denegado</h3>
+              </div>
+              <button
+                onClick={() => setModalPermiso({ mostrar: false, mensaje: "" })}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-6">{modalPermiso.mensaje}</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setModalPermiso({ mostrar: false, mensaje: "" })}
+                className="bg-[#008658] text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

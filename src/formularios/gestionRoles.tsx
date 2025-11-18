@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { apiFetch } from "../api";
+import { apiFetch, tienePermiso } from "../api";
 import type { ChangeEvent, FormEvent } from "react";
 import { Pencil, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
+import ModalError from "../components/ModalError";
+import { useModalError } from "../hooks/useModalError";
 
 const GestionRoles: React.FC = () => {
+  const { modalError, mostrarError, cerrarError } = useModalError();
+  
   // =========================
   // 🔹 Estados principales
   // =========================
@@ -107,11 +111,11 @@ const GestionRoles: React.FC = () => {
         cargarRoles();
       } else {
         console.error("❌ Error en la creación:", data);
-        alert(data.message || "Error al crear el rol");
+        mostrarError(data.message || "Error al crear el rol. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
       console.error("💥 Error al crear rol:", error);
-      alert("Error al conectar con el servidor");
+      mostrarError("Error al conectar con el servidor");
     }
   };
 
@@ -119,6 +123,10 @@ const GestionRoles: React.FC = () => {
   // 🔹 Editar rol
   // =========================
   const abrirEditar = (rol: any) => {
+    if (!tienePermiso('ActualizarRol')) {
+      mostrarError("No tienes permiso para editar roles");
+      return;
+    }
     setEditData({
       ...rol,
       permisos:
@@ -176,8 +184,13 @@ const GestionRoles: React.FC = () => {
   // =========================
   // 🔹 Eliminar rol
   // =========================
-  const confirmarEliminar = (id: number) =>
+  const confirmarEliminar = (id: number) => {
+    if (!tienePermiso('EliminarRol')) {
+      mostrarError("No tienes permiso para eliminar roles");
+      return;
+    }
     setModalConfirmacion({ tipo: "eliminar", id });
+  };
 
   const eliminarRol = async () => {
     try {
@@ -321,6 +334,14 @@ const GestionRoles: React.FC = () => {
       {mostrarModalExito && (
         <ModalExito cerrarModal={() => setMostrarModalExito(false)} />
       )}
+
+      {/* Modal de error */}
+      <ModalError
+        mostrar={modalError.mostrar}
+        titulo={modalError.titulo}
+        mensaje={modalError.mensaje}
+        onCerrar={cerrarError}
+      />
     </div>
   );
 };

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Eye, EyeOff, Pencil, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
-import { apiFetch } from "../api";
+import { apiFetch, tienePermiso } from "../api";
+import ModalError from "../components/ModalError";
+import { useModalError } from "../hooks/useModalError";
 
 // ✅ Tipo Role con descripción opcional
 type Role = { id: number; name: string; descripcion?: string };
@@ -19,6 +21,7 @@ type Funcionario = {
 };
 
 export default function GestionFuncionarios() {
+  const { modalError, mostrarError, cerrarError } = useModalError();
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -84,7 +87,7 @@ export default function GestionFuncionarios() {
     e.preventDefault();
 
     if (!formData.rol) {
-      alert("Por favor seleccione un rol antes de continuar");
+      mostrarError("Por favor seleccione un rol antes de continuar");
       return;
     }
 
@@ -112,7 +115,7 @@ export default function GestionFuncionarios() {
         setMostrarModalExito(true);
         cargarFuncionarios();
       } else {
-        alert(data.message || "Error al crear funcionario");
+        mostrarError(data.message || "Error al crear funcionario. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
       console.error("Error al crear funcionario:", error);
@@ -123,6 +126,10 @@ export default function GestionFuncionarios() {
   // 🔹 Abrir modal editar
   // =========================
   const abrirEditar = (funcionario: Funcionario) => {
+    if (!tienePermiso('ActualizarFuncionario')) {
+      mostrarError("No tienes permiso para editar funcionarios");
+      return;
+    }
     setFormData({
       id: funcionario.id,
       nombre: funcionario.nombre,
@@ -155,7 +162,7 @@ export default function GestionFuncionarios() {
         setMostrarModalExito(true);
         cargarFuncionarios();
       } else {
-        alert(data.message || "Error al actualizar funcionario");
+        mostrarError(data.message || "Error al actualizar funcionario. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
       console.error("Error al actualizar funcionario:", error);
@@ -165,7 +172,13 @@ export default function GestionFuncionarios() {
   // =========================
   // 🔹 Eliminar funcionario
   // =========================
-  const confirmarEliminar = (id: number) => setModalConfirmacion({ tipo: "eliminar", id });
+  const confirmarEliminar = (id: number) => {
+    if (!tienePermiso('EliminarFuncionario')) {
+      mostrarError("No tienes permiso para eliminar funcionarios");
+      return;
+    }
+    setModalConfirmacion({ tipo: "eliminar", id });
+  };
 
   const eliminarFuncionario = async () => {
     try {
@@ -181,7 +194,7 @@ export default function GestionFuncionarios() {
         setMostrarModalExito(true);
         cargarFuncionarios();
       } else {
-        alert(data.message || "Error al eliminar funcionario");
+        mostrarError(data.message || "Error al eliminar funcionario. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
       console.error("Error al eliminar funcionario:", error);
@@ -205,6 +218,10 @@ export default function GestionFuncionarios() {
           <h1 className="text-2xl font-bold text-gray-800">Gestión de Funcionarios</h1>
           <button
             onClick={() => {
+              if (!tienePermiso('CrearFuncionario')) {
+                mostrarError("No tienes permiso para crear funcionarios");
+                return;
+              }
               setFormData({
                 id: null,
                 nombre: "",
@@ -302,6 +319,14 @@ export default function GestionFuncionarios() {
       )}
 
       {mostrarModalExito && <ModalExito cerrarModal={() => setMostrarModalExito(false)} />}
+
+      {/* Modal de error */}
+      <ModalError
+        mostrar={modalError.mostrar}
+        titulo={modalError.titulo}
+        mensaje={modalError.mensaje}
+        onCerrar={cerrarError}
+      />
     </div>
   );
 }

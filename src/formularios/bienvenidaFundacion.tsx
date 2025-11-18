@@ -1,7 +1,9 @@
 // imports
 import { useState, useEffect } from "react";
 import { Search, PlusCircle, Pencil, Trash2, CheckCircle2, X } from "lucide-react";
-import { apiFetch } from "../api";
+import { apiFetch, tienePermiso } from "../api";
+import ModalError from "../components/ModalError";
+import { useModalError } from "../hooks/useModalError";
 
 function BienvenidaFundacion() {
   
@@ -13,6 +15,9 @@ function BienvenidaFundacion() {
   const [editandoMascota, setEditandoMascota] = useState<any | null>(null);
   const [confirmEliminar, setConfirmEliminar] = useState<any | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  
+  // Hook para modal de errores
+  const { modalError, mostrarError, cerrarError } = useModalError();
 
   // Mascotas
   const [mascotas, setMascotas] = useState<any[]>([]);
@@ -49,6 +54,10 @@ function BienvenidaFundacion() {
 
   // Abrir formulario en modo Agregar
   const abrirAgregar = () => {
+    if (!tienePermiso('CrearMascotas')) {
+      mostrarError("No tienes permiso para crear mascotas");
+      return;
+    }
     setEditandoMascota(null);
     setNombre("");
     setEdad("");
@@ -59,6 +68,10 @@ function BienvenidaFundacion() {
 
   // Abrir formulario en modo Editar
   const abrirEditar = (mascota: any) => {
+    if (!tienePermiso('ActualizarMascotas')) {
+      mostrarError("No tienes permiso para editar mascotas");
+      return;
+    }
     setEditandoMascota(mascota);
     setNombre(mascota.nombre ?? "");
     setEdad(String(mascota.edad ?? ""));
@@ -94,7 +107,8 @@ function BienvenidaFundacion() {
           setEditandoMascota(null);
           setMostrarModalExito(true);
         } else {
-          alert("Error al actualizar la mascota");
+          const errorData = await response.json().catch(() => ({}));
+          mostrarError(errorData.message || "Error al actualizar la mascota. Verifica que tengas los permisos necesarios.");
         }
       } else {
         // === crear ===
@@ -113,12 +127,13 @@ function BienvenidaFundacion() {
           setMostrarFormulario(false);
           setMostrarModalExito(true);
         } else {
-          alert("Error al guardar la mascota");
+          const errorData = await response.json().catch(() => ({}));
+          mostrarError(errorData.message || "Error al guardar la mascota. Verifica que tengas los permisos necesarios.");
         }
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Hubo un problema con la conexión al servidor");
+      mostrarError("Hubo un problema con la conexión al servidor");
     } finally {
       setIsProcessing(false);
       setNombre("");
@@ -137,6 +152,10 @@ function BienvenidaFundacion() {
 
   // Eliminar
   const handleEliminarMascota = (id: number | string) => {
+    if (!tienePermiso('EliminarMascotas')) {
+      mostrarError("No tienes permiso para eliminar mascotas");
+      return;
+    }
     const mascota = mascotas.find((m) => String(m.id) === String(id));
     if (!mascota) {
       console.warn("Mascota no encontrada", id);
@@ -157,7 +176,7 @@ function BienvenidaFundacion() {
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Error del backend:", errorData);
-        alert(`Error al eliminar: ${errorData.message || 'Error desconocido'}`);
+        mostrarError(errorData.message || 'Error al eliminar. Verifica que tengas los permisos necesarios.');
         setIsProcessing(false);
         return;
       }
@@ -169,7 +188,7 @@ function BienvenidaFundacion() {
       console.log("✅ Mascota eliminada correctamente");
     } catch (error) {
       console.error("Error al eliminar la mascota:", error);
-      alert("Error al conectar con el servidor");
+      mostrarError("Error al conectar con el servidor");
     } finally {
       setIsProcessing(false);
     }
@@ -368,6 +387,14 @@ function BienvenidaFundacion() {
           ))}
         </div>
       </section>
+
+      {/* Modal de error */}
+      <ModalError
+        mostrar={modalError.mostrar}
+        titulo={modalError.titulo}
+        mensaje={modalError.mensaje}
+        onCerrar={cerrarError}
+      />
     </div>
   );
 }
