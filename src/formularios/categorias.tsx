@@ -12,7 +12,7 @@ interface Producto {
 }
 
 import { useState, useEffect } from "react";
-import { Search, PlusCircle, Pencil, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Search, Pencil, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { tienePermiso, esFundacion } from "../api";
 import ModalError from "../components/ModalError";
 import { useModalError } from "../hooks/useModalError";
