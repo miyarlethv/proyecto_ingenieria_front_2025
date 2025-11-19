@@ -1,14 +1,22 @@
+import { useState, useEffect } from "react";
+import { Search, PlusCircle, Pencil, Trash2, CheckCircle2, X } from "lucide-react";
+import { tienePermiso, esFundacion } from "../api";
+import ModalError from "../components/ModalError";
+import { useModalError } from "../hooks/useModalError";
+
 // ==================== TIPOS ====================
 interface Categoria {
   id: number;
   categoria: string;
 }
+
 interface NombreProducto {
   id: number;
   nombre: string;
   categoria_id: number;
   categoria: string;
 }
+
 interface Producto {
   id: number;
   nombre: string;
@@ -18,15 +26,10 @@ interface Producto {
   cantidad: number;
   foto?: string;
 }
-// ==================== IMPORTS ====================
-import { useState, useEffect } from "react";
-import { Search, PlusCircle, Pencil, Trash2, CheckCircle2, X } from "lucide-react";
-import { tienePermiso, esFundacion } from "../api";
-import ModalError from "../components/ModalError";
-import { useModalError } from "../hooks/useModalError";
 
 // ==================== UTILIDADES ====================
 const puedeGestionarInventario = () => esFundacion() || tienePermiso("GestionarInventario");
+
 const apiFetch = (endpoint: string, options: RequestInit = {}) => {
   const token = localStorage.getItem("token");
   const baseHeaders = options.headers ? { ...(options.headers as Record<string, string>) } : {};
@@ -109,10 +112,13 @@ function InventarioFundacion() {
   }, [categoriaId, nombresOriginales]);
 
   // ==================== FILTROS ====================
-  const filtroProductos = productos.filter((producto) =>
-    producto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-    producto.categoria.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const filtroProductos = productos.filter((producto) => {
+    const nombreProducto = producto.nombre?.toLowerCase() || "";
+    const categoriaProducto = producto.categoria?.toLowerCase() || "";
+    const terminoBusqueda = busqueda.toLowerCase();
+    
+    return nombreProducto.includes(terminoBusqueda) || categoriaProducto.includes(terminoBusqueda);
+  });
 
   // ==================== HANDLERS ====================
   const abrirAgregar = () => {
@@ -226,7 +232,6 @@ function InventarioFundacion() {
   // ==================== RENDER ====================
   return (
     <div className="w-full">
-      {/* Barra búsqueda + Agregar */}
       <div className="flex justify-between items-center mb-6 mt-4">
         <div className="relative w-1/3">
           <Search className="absolute inset-y-0 left-3 my-auto text-gray-400" size={20} />
@@ -251,7 +256,6 @@ function InventarioFundacion() {
         </div>
       </div>
 
-      {/* Modal Formulario */}
       {mostrarFormulario && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
@@ -259,7 +263,6 @@ function InventarioFundacion() {
               {editandoProducto ? "Actualizar Producto" : "Registrar Producto"}
             </h2>
             <form onSubmit={manejarSubmit} className="flex flex-col gap-4">
-              {/* Categoría */}
               <select
                 id="categoria_id"
                 value={categoriaId}
@@ -274,7 +277,6 @@ function InventarioFundacion() {
                   </option>
                 ))}
               </select>
-              {/* Nombre del producto */}
               <select
                 id="nombre_id"
                 value={nombreId}
@@ -289,7 +291,6 @@ function InventarioFundacion() {
                   </option>
                 ))}
               </select>
-              {/* Cantidad */}
               <input
                 id="cantidad"
                 type="number"
@@ -299,7 +300,6 @@ function InventarioFundacion() {
                 className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full"
                 required
               />
-              {/* Foto */}
               <input
                 id="foto"
                 type="file"
@@ -329,7 +329,6 @@ function InventarioFundacion() {
         </div>
       )}
 
-      {/* Modal Confirmar eliminar */}
       {confirmEliminar && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg text-center">
@@ -355,7 +354,6 @@ function InventarioFundacion() {
         </div>
       )}
 
-      {/* Modal Éxito */}
       {mostrarModalExito && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg text-center">
@@ -372,7 +370,6 @@ function InventarioFundacion() {
         </div>
       )}
 
-      {/* Modal Ver más */}
       {productoSeleccionado && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg p-6 w-96 text-center shadow-lg relative">
@@ -396,7 +393,6 @@ function InventarioFundacion() {
         </div>
       )}
 
-      {/* Lista productos */}
       <section className="w-full">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filtroProductos.map((producto) => (
@@ -412,17 +408,11 @@ function InventarioFundacion() {
               )}
               <div className="text-center w-full">
                 <p className="text-xs text-black font-medium">Categoría</p>
-                <p className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">{producto.categoria}</p>
+                <p className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">{producto.categoria || "Sin categoría"}</p>
                 <p className="text-xs text-black font-medium">Nombre</p>
-                <p className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">{producto.nombre}</p>
+                <p className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">{producto.nombre || "Sin nombre"}</p>
                 <p className="text-xs text-black font-medium">Cantidad</p>
                 <p className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">{producto.cantidad}</p>
-                {/* <button
-                  onClick={() => setProductoSeleccionado(producto)}
-                  className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2"
-                >
-                  Ver más..
-                </button> */}
                 <div className="flex items-center justify-center gap-3 mt-2">
                   <button onClick={() => abrirEditar(producto)} className="p-2 rounded-full hover:bg-gray-100 transition">
                     <Pencil size={20} className="text-black" />
@@ -437,7 +427,6 @@ function InventarioFundacion() {
         </div>
       </section>
 
-      {/* Modal de error */}
       <ModalError
         mostrar={modalError.mostrar}
         titulo={modalError.titulo}

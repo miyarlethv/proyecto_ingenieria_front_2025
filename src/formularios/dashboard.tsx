@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Dog, ChartPie, Users, CheckCircle, Clock, XCircle, FileText } from "lucide-react";
-import { Bar } from 'react-chartjs-2';
+import { Bar } from "react-chartjs-2";
 import { 
   Chart as ChartJS, 
   CategoryScale, 
@@ -10,7 +10,7 @@ import {
   Title, 
   Tooltip, 
   Legend
-} from 'chart.js';
+} from "chart.js";
 import { apiFetch } from "../api";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -18,30 +18,20 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const nombreFundacion = location.state?.nombre || "Fundación";
+  const nombreFundacion = location.state?.nombre || "Fundacion";
 
-  // Estados para los contadores
   const [totalMascotas, setTotalMascotas] = useState(0);
   const [totalProductos, setTotalProductos] = useState(0);
   const [totalFuncionarios, setTotalFuncionarios] = useState(0);
-  
-  // Estados para adopciones
   const [totalAdopciones, setTotalAdopciones] = useState(0);
   const [adopcionesPendientes, setAdopcionesPendientes] = useState(0);
   const [adopcionesAprobadas, setAdopcionesAprobadas] = useState(0);
   const [adopcionesRechazadas, setAdopcionesRechazadas] = useState(0);
-
-  // Estados para personas registradas
   const [totalPersonas, setTotalPersonas] = useState(0);
 
-  // Estado para la foto de la fundación
-  const [fotoFundacion, setFotoFundacion] = useState<string | null>(null);
-
-  // Cargar datos de las APIs
   useEffect(() => {
     const cargarDatos = async () => {
       try {
-        // Cargar mascotas
         const resMascotas = await apiFetch("mascotas");
         if (resMascotas.ok) {
           const dataMascotas = await resMascotas.json();
@@ -49,7 +39,6 @@ function Dashboard() {
           setTotalMascotas(mascotas.length);
         }
 
-        // Cargar productos
         const resProductos = await apiFetch("productos");
         if (resProductos.ok) {
           const dataProductos = await resProductos.json();
@@ -57,7 +46,6 @@ function Dashboard() {
           setTotalProductos(productos.length);
         }
 
-        // Cargar funcionarios
         const resFuncionarios = await apiFetch("ListarFuncionarios");
         if (resFuncionarios.ok) {
           const dataFuncionarios = await resFuncionarios.json();
@@ -65,38 +53,22 @@ function Dashboard() {
           setTotalFuncionarios(funcionarios.length);
         }
 
-        // Cargar adopciones
         const resAdopciones = await apiFetch("solicitudes-adopcion");
         if (resAdopciones.ok) {
           const dataAdopciones = await resAdopciones.json();
           const adopciones = Array.isArray(dataAdopciones) ? dataAdopciones : dataAdopciones.data ?? [];
           
           setTotalAdopciones(adopciones.length);
-          setAdopcionesPendientes(adopciones.filter((a: any) => a.estado === 'Pendiente' || a.estado === 'pendiente').length);
-          setAdopcionesAprobadas(adopciones.filter((a: any) => a.estado === 'Aprobada' || a.estado === 'aprobada').length);
-          setAdopcionesRechazadas(adopciones.filter((a: any) => a.estado === 'Rechazada' || a.estado === 'rechazada').length);
+          setAdopcionesPendientes(adopciones.filter((a: any) => a.estado === "Pendiente" || a.estado === "pendiente").length);
+          setAdopcionesAprobadas(adopciones.filter((a: any) => a.estado === "Aprobada" || a.estado === "aprobada").length);
+          setAdopcionesRechazadas(adopciones.filter((a: any) => a.estado === "Rechazada" || a.estado === "rechazada").length);
         }
 
-        // Cargar personas
         const resPersonas = await apiFetch("personas");
         if (resPersonas.ok) {
           const dataPersonas = await resPersonas.json();
           const personas = Array.isArray(dataPersonas) ? dataPersonas : dataPersonas.data ?? [];
           setTotalPersonas(personas.length);
-        }
-
-        // Cargar datos de la fundación (foto y nombre)
-        const resFundacion = await apiFetch("fundaciones");
-        if (resFundacion.ok) {
-          const dataFundacion = await resFundacion.json();
-          const fundaciones = Array.isArray(dataFundacion) ? dataFundacion : dataFundacion.data ?? [];
-          
-          // Buscar la fundación actual por nombre
-          const fundacionActual = fundaciones.find((f: any) => f.nombre === nombreFundacion);
-          
-          if (fundacionActual && fundacionActual.logo) {
-            setFotoFundacion(fundacionActual.logo);
-          }
         }
       } catch (error) {
         console.error("Error cargando datos del dashboard:", error);
@@ -104,9 +76,8 @@ function Dashboard() {
     };
 
     cargarDatos();
-  }, [nombreFundacion]);
+  }, []);
 
-  // Tarjetas de resumen con datos dinámicos
   const stats = [
     { 
       color: "bg-yellow-500", 
@@ -120,7 +91,7 @@ function Dashboard() {
       value: totalProductos, 
       label: "Productos en inventario", 
       icon: <ChartPie size={28} />, 
-      ruta: "/graficaInventario"
+      ruta: "/inventariofundacion"
     },
     { 
       color: "bg-cyan-600", 
@@ -131,7 +102,6 @@ function Dashboard() {
     },
   ];
 
-  // Estadísticas de adopciones
   const estadisticasAdopciones = [
     {
       label: "Total",
@@ -163,20 +133,19 @@ function Dashboard() {
     }
   ];
 
-  // Datos para la gráfica de personas
   const datosGraficaPersonas = {
-    labels: ['Total de Personas'],
+    labels: ["Total de Personas"],
     datasets: [
       {
-        label: 'Visitantes Registrados',
+        label: "Visitantes Registrados",
         data: [totalPersonas],
-        backgroundColor: 'rgba(0, 134, 88, 0.8)',
-        borderColor: 'rgba(0, 134, 88, 1)',
+        backgroundColor: "rgba(0, 134, 88, 0.8)",
+        borderColor: "rgba(0, 134, 88, 1)",
         borderWidth: 2,
         borderRadius: 10,
         barThickness: 60,
-        hoverBackgroundColor: 'rgba(0, 134, 88, 1)',
-        hoverBorderColor: 'rgba(0, 134, 88, 1)',
+        hoverBackgroundColor: "rgba(0, 134, 88, 1)",
+        hoverBorderColor: "rgba(0, 134, 88, 1)",
       },
     ],
   };
@@ -187,35 +156,35 @@ function Dashboard() {
     plugins: {
       legend: {
         display: true,
-        position: 'top' as const,
+        position: "top" as const,
         labels: {
           font: {
             size: 13,
-            weight: 'bold' as const,
+            weight: "bold" as const,
           },
-          color: '#333',
+          color: "#333",
           padding: 15,
           usePointStyle: true,
         },
       },
       title: {
         display: true,
-        text: 'Registro Total de Visitantes',
+        text: "Registro Total de Visitantes",
         font: {
           size: 16,
-          weight: 'bold' as const,
+          weight: "bold" as const,
         },
-        color: '#008658',
+        color: "#008658",
         padding: {
           top: 5,
           bottom: 20,
         },
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        backgroundColor: "rgba(0, 0, 0, 0.85)",
         titleFont: {
           size: 14,
-          weight: 'bold' as const,
+          weight: "bold" as const,
         },
         bodyFont: {
           size: 13,
@@ -238,11 +207,11 @@ function Dashboard() {
           font: {
             size: 12,
           },
-          color: '#666',
+          color: "#666",
           padding: 8,
         },
         grid: {
-          color: 'rgba(0, 0, 0, 0.06)',
+          color: "rgba(0, 0, 0, 0.06)",
           lineWidth: 1,
         },
         border: {
@@ -250,12 +219,12 @@ function Dashboard() {
         },
         title: {
           display: true,
-          text: 'Cantidad',
+          text: "Cantidad",
           font: {
             size: 13,
-            weight: 'bold' as const,
+            weight: "bold" as const,
           },
-          color: '#008658',
+          color: "#008658",
           padding: { top: 10, bottom: 0 },
         },
       },
@@ -264,7 +233,7 @@ function Dashboard() {
           font: {
             size: 12,
           },
-          color: '#666',
+          color: "#666",
         },
         grid: {
           display: false,
@@ -278,12 +247,10 @@ function Dashboard() {
 
   return (
     <div className="w-full p-4 bg-gray-100 min-h-screen">
-      {/* ========== HEADER ========== */}
       <header className="mb-4">
         <h1 className="text-2xl font-bold text-[#008658]">Dashboard</h1>
       </header>
           
-      {/* ========== TARJETAS DE RESUMEN ========== */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {stats.map((stat) => (
           <div 
@@ -301,15 +268,13 @@ function Dashboard() {
               }}
               className="mt-2 text-xs bg-white text-black px-3 py-1 rounded hover:bg-gray-200 transition"
             >
-              Más info
+              Mas info
             </button>
           </div>
         ))}
       </div>
 
-      {/* ========== GRÁFICAS ========== */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Estadísticas de Adopciones */}
         <div className="bg-white rounded-xl shadow p-4">
           <h2 className="text-base font-bold mb-3 text-[#008658]">Estado de Adopciones</h2>
           <div className="grid grid-cols-2 gap-3 mb-4">
@@ -330,9 +295,8 @@ function Dashboard() {
             ))}
           </div>
           
-          {/* Barra de progreso visual */}
           <div>
-            <div className="text-xs font-medium text-gray-700 mb-2">Distribución</div>
+            <div className="text-xs font-medium text-gray-700 mb-2">Distribucion</div>
             <div className="w-full h-6 bg-gray-200 rounded-full overflow-hidden flex">
               {totalAdopciones > 0 ? (
                 <>
@@ -362,14 +326,13 @@ function Dashboard() {
               )}
             </div>
             <div className="flex justify-between text-xs text-gray-600 mt-1">
-              <span>🟡 Pendientes</span>
-              <span>🟢 Aprobadas</span>
-              <span>🔴 Rechazadas</span>
+              <span>Pendientes</span>
+              <span>Aprobadas</span>
+              <span>Rechazadas</span>
             </div>
           </div>
         </div>
 
-        {/* Gráfica de Personas Registradas */}
         <div className="bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#008658]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-bold text-[#008658] flex items-center gap-2">
