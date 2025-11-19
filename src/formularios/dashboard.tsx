@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { Home, Users, Eye, Dog, NotebookPen, UserPlus, Shield, Boxes, NotepadText, History, ChartPie } from "lucide-react";
+import { Home, Users, Dog, NotebookPen, UserPlus, Shield, Boxes, NotepadText, History, ChartPie } from "lucide-react";
 
 function Dashboard() {
   const navigate = useNavigate();
