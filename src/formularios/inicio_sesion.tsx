@@ -87,9 +87,9 @@ function Login() {
     navigate("/");
   };
 
-  const recuperarContraseña = () => {
-    navigate("/recuperar-contraseña");
-  };
+  // const recuperarContraseña = () => {
+  //   navigate("/recuperar-contraseña");
+  // };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#EEEEEE] px-4">

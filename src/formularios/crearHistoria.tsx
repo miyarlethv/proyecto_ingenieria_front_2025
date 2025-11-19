@@ -105,7 +105,7 @@ const CrearHistoria: React.FC = () => {
   const cerrarModalConfirmacion = () =>
     setModalConfirmacion({ tipo: null, historiaId: undefined });
 
-  const cerrarModalExito = () => setMostrarModalExito(false);
+  // const cerrarModalExito = () => setMostrarModalExito(false);
 
   // 🔹 Manejo de inputs
   const handleChange = (
