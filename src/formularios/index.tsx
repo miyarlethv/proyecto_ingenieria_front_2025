@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiFetch } from "../api";
 import { useNavigate } from "react-router-dom";
 import logoIndex from "../assets/LogoIndex.jpg";
 import Imagen1 from "../assets/Imagen1.jpg";
@@ -7,10 +8,24 @@ import Imagen3 from "../assets/Imagen3.jpg";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import {FaInstagram,FaFacebook,FaTiktok,FaYoutube,FaWhatsapp,FaPhoneAlt,} 
-from "react-icons/fa";
+import {
+  FaInstagram,
+  FaFacebook,
+  FaTiktok,
+  FaYoutube,
+  FaWhatsapp,
+  FaPhoneAlt,
+} from "react-icons/fa";
 
 const imagenes = [Imagen1, Imagen2, Imagen3];
+
+interface Mascota {
+  id?: number | string;
+  nombre?: string;
+  edad?: string;
+  foto?: string | null;
+  [key: string]: any;
+}
 
 function Carrusel() {
   const settings = {
@@ -25,17 +40,15 @@ function Carrusel() {
   };
 
   return (
-    <div className="relative w-full aspect-[16/7] overflow-hidden">
-      <Slider {...settings}>
+    <div className="relative w-full h-[500px] overflow-hidden bg-gray-100">
+      <Slider {...settings} className="h-full">
         {imagenes.map((img, idx) => (
-          <div
-            key={idx}
-            className="flex justify-center items-center w-full h-full overflow-hidden"
-          >
+          <div key={idx} className="h-[500px] w-full">
             <img
               src={img}
               alt={`slide-${idx}`}
               className="w-full h-full object-cover object-center"
+              style={{ display: 'block' }}
             />
           </div>
         ))}
@@ -46,18 +59,41 @@ function Carrusel() {
 
 function Index() {
   const navigate = useNavigate();
-  const [mascotas, setMascotas] = useState([]);
+  const [mascotas, setMascotas] = useState<Mascota[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLoginClick = () => navigate("/login");
   const handleRegistroClick = () => navigate("/registro");
 
   // 🔹 Llamada al backend (Laravel)
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/mascotas/aleatorias")
-      .then((res) => res.json())
-      .then((data) => {setMascotas(data); console.log(data);
-      })
-      .catch((err) => console.error("Error al cargar mascotas:", err));
+    const cargar = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await apiFetch("/mascotas/aleatorias");
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Error HTTP al cargar mascotas:", res.status, text);
+          setError(`Error ${res.status}: ${text}`);
+          setMascotas([]);
+          return;
+        }
+        const data = await res.json();
+        console.log("Mascotas cargadas:", data);
+        // Asegurarnos de que es un array
+        setMascotas(Array.isArray(data) ? data : []);
+      } catch (err: any) {
+        console.error("Error al cargar mascotas:", err);
+        setError(err?.message || String(err));
+        setMascotas([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargar();
   }, []);
 
   return (
@@ -70,16 +106,16 @@ function Index() {
             ADOPTA CLUB PÚRPURA
           </h1>
         </div>
-        <nav className="flex gap-2">
+        <nav className="flex gap-3">
           <button
             onClick={handleRegistroClick}
-            className="bg-white text-black border border-black rounded px-3 py-1 hover:bg-gray-100 transition"
+            className="bg-white text-[#008658] border border-[#008658] px-4 py-2 rounded-xl font-medium hover:bg-[#a0a8a5] hover:text-white transition shadow"
           >
             Registrarme
           </button>
           <button
             onClick={handleLoginClick}
-            className="bg-white text-black border border-black rounded px-3 py-1 hover:bg-gray-100 transition"
+            className="bg-white text-[#008658] border border-[#008658] px-4 py-2 rounded-xl font-medium hover:bg-[#a0a8a5] hover:text-white transition shadow"
           >
             Iniciar Sesión
           </button>
@@ -96,28 +132,41 @@ function Index() {
         </h2>
 
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
-          {mascotas.length > 0 ? (
-            mascotas.map((mascota) => (
+          {loading ? (
+            <p className="col-span-full text-center text-gray-500">Cargando mascotas...</p>
+          ) : error ? (
+            <p className="col-span-full text-center text-red-500">{error}</p>
+          ) : mascotas.length > 0 ? (
+            mascotas.map((mascota, index) => (
               <div
-                key={mascota.id}
-                className="flex flex-col items-center p-3 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition"
+                key={mascota.id ?? index}
+                className="flex flex-col items-center bg-white border border-gray-300 rounded-lg p-4 shadow-md"
               >
-                <div className="w-28 h-28 rounded-full bg-gray-200 mb-3 overflow-hidden border border-gray-300">
+                {mascota.foto ? (
                   <img
-                    src={ "http://127.0.0.1:8000/api/storage/${mascota.foto}"
-                    }
-                    alt={mascota.nombre}
-                    className="w-full h-full object-cover"
+                    src={mascota.foto.startsWith('http') ? mascota.foto : `http://127.0.0.1:8000/storage/${mascota.foto}`}
+                    alt={mascota.nombre ?? "mascota"}
+                    className="w-24 h-24 object-cover mb-3 rounded-full"
+                    onError={(e) => {
+                      e.currentTarget.src = "https://via.placeholder.com/150";
+                    }}
                   />
-                </div>
+                ) : (
+                  <div className="w-24 h-24 bg-gray-200 mb-3 rounded-full" />
+                )}
                 <div className="text-center w-full">
-                  <p className="border border-black px-2 py-1 mb-1 text-sm font-semibold">
-                    {mascota.nombre}
+                  <p className="text-xs text-black font-medium">Nombre</p>
+                  <p className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">
+                    {mascota.nombre ?? "-"}
                   </p>
-                  <p className="border border-black px-2 py-1 mb-1 text-sm">
-                    {mascota.edad}
+                  <p className="text-xs text-black font-medium">Edad</p>
+                  <p className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2">
+                    {mascota.edad ?? "-"}
                   </p>
-                  <button className="border border-black px-2 py-1 text-sm hover:bg-gray-100">
+                  <button 
+                    onClick={() => navigate('/registro')}
+                    className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2"
+                  >
                     Ver más..
                   </button>
                 </div>

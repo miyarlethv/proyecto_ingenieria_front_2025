@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "../index.css";
-import loginService from "./loginService";
+import { apiFetch, guardarLogin } from "../api";
 
 function Login() {
   const [verContraseña, setVerContraseña] = useState(false);
@@ -11,6 +11,8 @@ function Login() {
     email: "",
     password: "",
   });
+  const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(false);
 
   const navigate = useNavigate();
 
@@ -21,57 +23,80 @@ function Login() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setLoginData((prev) => ({ ...prev, [name]: value }));
+    setError(""); // Limpiar error al escribir
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  console.log("Datos del login:", loginData);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setCargando(true);
 
-  try {
-    const response = await loginService.login(loginData);
-    console.log("Respuesta del login:", response.data);
+    try {
+      console.log("🔍 Intentando login con:", loginData.email); // Debug
+      
+      const response = await apiFetch("login", { // ✅ Sin slash, sin barra inicial
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loginData),
+      });
 
-    // Guardar token
-    if (response.data.token) {
-      localStorage.setItem("token", response.data.token);
+      console.log("📡 Response status:", response.status); // Debug
+      console.log("📡 Response headers:", response.headers); // Debug
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Credenciales incorrectas");
+        setCargando(false);
+        return;
+      }
+
+      console.log("✅ Login exitoso:", data);
+
+      // 🔥 Guardar token y permisos en localStorage
+      guardarLogin(data);
+
+      // Redirigir según tipo de usuario
+      if (data.tipo === "persona") {
+        navigate("/bienvenidaUsuario", { 
+          state: { nombre: data.nombre }, 
+          replace: true 
+        });
+      } else if (data.tipo === "fundacion") {
+        navigate("/dashboard", { 
+          state: { nombre: data.nombre }, 
+          replace: true 
+        });
+      } else if (data.tipo === "funcionario") {
+        navigate("/dashboard", { 
+          state: { nombre: data.nombre }, 
+          replace: true 
+        });
+      } else {
+        setError("Tipo de usuario no reconocido");
+        setCargando(false);
+      }
+    } catch (error: any) {
+      console.error("❌ Error en login:", error);
+      setError("Error al conectar con el servidor. Intenta de nuevo.");
+      setCargando(false);
     }
-
-    // Guardar tipo
-    if (response.data.tipo) {
-      localStorage.setItem("tipo", response.data.tipo);
-    }
-
-    // Redirigir según el tipo de usuario y pasar el nombre
-    if (response.data.tipo === "usuario") {
-      navigate("/bienvenidaUsuario", { state: { nombre: response.data.nombre } });
-    } else if (response.data.tipo === "fundacion") {
-      navigate("/bienvenidaFundacion", { state: { nombre: response.data.nombre } });
-    } else {
-      navigate("/"); // fallback
-    }
-  } catch (error: any) {
-    console.error("Error en login:", error.response?.data || error.message);
-    alert("Credenciales incorrectas o error en el servidor");
-  }
-};
-
+  };
 
   const volverInicio = () => {
     navigate("/");
   };
 
-  const recuperarContraseña = () => {
-    // Aquí puedes redirigir a una ruta de recuperación
-    navigate("/recuperar-contraseña");
-  };
+  // const recuperarContraseña = () => {
+  //   navigate("/recuperar-contraseña");
+  // };
 
   return (
-
     <div className="min-h-screen flex items-center justify-center bg-[#EEEEEE] px-4">
       {/* Botón Volver */}
       <button
         onClick={volverInicio}
-       className="absolute top-4 right-4 bg-[#008658] text-white border border-[#008658] px-4 py-2 rounded-xl font-medium hover:bg-[#006f49] transition shadow"
+        className="absolute top-4 right-4 bg-[#008658] text-white border border-[#008658] px-4 py-2 rounded-xl font-medium hover:bg-[#006f49] transition shadow"
       >
         Volver
       </button>
@@ -83,6 +108,7 @@ function Login() {
       >
         <div className="flex justify-center">
           <button
+            type="button"
             onClick={volverInicio}
             className="focus:outline-none"
             title="Volver al inicio"
@@ -100,14 +126,22 @@ function Login() {
           Bienvenido. Ingresa tus credenciales
         </p>
 
+        {/* Mensaje de error */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl text-sm">
+            {error}
+          </div>
+        )}
+
         <input
-          type="text"
+          type="email"
           name="email"
-          placeholder="Usuario"
+          placeholder="Correo electrónico"
           className="w-full px-4 py-2 rounded-xl bg-white border border-[#008658] placeholder-black text-black focus:outline-none focus:ring-2 focus:ring-[#008658] shadow-sm"
           onChange={handleChange}
           value={loginData.email}
           required
+          disabled={cargando}
         />
 
         <div className="relative w-full">
@@ -119,32 +153,36 @@ function Login() {
             onChange={handleChange}
             value={loginData.password}
             required
+            disabled={cargando}
           />
           <button
             type="button"
             onClick={togglePasswordVisibility}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-[#008658] hover:text-[#006f49]"
+            disabled={cargando}
           >
             {verContraseña ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
 
         {/* Enlace recuperar contraseña */}
-        <div className="text-right">
+        {/* <div className="text-right">
           <button
             type="button"
             onClick={recuperarContraseña}
             className="text-sm text-[#008658] hover:underline"
+            disabled={cargando}
           >
             ¿Olvidaste tu contraseña?
           </button>
-        </div>
+        </div> */}
 
         <button
           type="submit"
-          className="w-full py-2 bg-[#008658] text-[#ffffff] font-semibold rounded-xl hover:bg-[#006f49] transition shadow"
+          className="w-full py-2 bg-[#008658] text-[#ffffff] font-semibold rounded-xl hover:bg-[#006f49] transition shadow disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={cargando}
         >
-          Iniciar sesión
+          {cargando ? "Iniciando sesión..." : "Iniciar sesión"}
         </button>
       </form>
     </div>

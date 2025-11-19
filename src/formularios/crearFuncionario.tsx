@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Eye, EyeOff, Pencil, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { apiFetch, tienePermiso } from "../api";
+import ModalError from "../components/ModalError";
+import { useModalError } from "../hooks/useModalError";
 
 // ✅ Tipo Role con descripción opcional
 type Role = { id: number; name: string; descripcion?: string };
@@ -18,6 +21,7 @@ type Funcionario = {
 };
 
 export default function GestionFuncionarios() {
+  const { modalError, mostrarError, cerrarError } = useModalError();
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,21 +51,25 @@ export default function GestionFuncionarios() {
 
   const cargarFuncionarios = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/ListarFuncionarios");
+      const res = await apiFetch("/ListarFuncionarios");
       const data = await res.json();
-      setFuncionarios(data);
+      console.log("📦 Funcionarios recibidos:", data);
+      setFuncionarios(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error al listar funcionarios:", error);
+      setFuncionarios([]);
     }
   };
 
   const cargarRoles = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/ListarRoles");
+      const res = await apiFetch("/ListarRoles");
       const data = await res.json();
-      setRoles(data);
+      console.log("📦 Roles recibidos:", data);
+      setRoles(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error al cargar roles:", error);
+      setRoles([]);
     }
   };
 
@@ -79,12 +87,12 @@ export default function GestionFuncionarios() {
     e.preventDefault();
 
     if (!formData.rol) {
-      alert("Por favor seleccione un rol antes de continuar");
+      mostrarError("Por favor seleccione un rol antes de continuar");
       return;
     }
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/CrearFuncionario", {
+      const res = await apiFetch("/CrearFuncionario", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -107,7 +115,7 @@ export default function GestionFuncionarios() {
         setMostrarModalExito(true);
         cargarFuncionarios();
       } else {
-        alert(data.message || "Error al crear funcionario");
+        mostrarError(data.message || "Error al crear funcionario. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
       console.error("Error al crear funcionario:", error);
@@ -118,6 +126,10 @@ export default function GestionFuncionarios() {
   // 🔹 Abrir modal editar
   // =========================
   const abrirEditar = (funcionario: Funcionario) => {
+    if (!tienePermiso('ActualizarFuncionario')) {
+      mostrarError("No tienes permiso para editar funcionarios");
+      return;
+    }
     setFormData({
       id: funcionario.id,
       nombre: funcionario.nombre,
@@ -137,7 +149,7 @@ export default function GestionFuncionarios() {
   // =========================
   const actualizarFuncionario = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/ActualizarFuncionario", {
+      const res = await apiFetch("/ActualizarFuncionario", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -150,7 +162,7 @@ export default function GestionFuncionarios() {
         setMostrarModalExito(true);
         cargarFuncionarios();
       } else {
-        alert(data.message || "Error al actualizar funcionario");
+        mostrarError(data.message || "Error al actualizar funcionario. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
       console.error("Error al actualizar funcionario:", error);
@@ -160,11 +172,17 @@ export default function GestionFuncionarios() {
   // =========================
   // 🔹 Eliminar funcionario
   // =========================
-  const confirmarEliminar = (id: number) => setModalConfirmacion({ tipo: "eliminar", id });
+  const confirmarEliminar = (id: number) => {
+    if (!tienePermiso('EliminarFuncionario')) {
+      mostrarError("No tienes permiso para eliminar funcionarios");
+      return;
+    }
+    setModalConfirmacion({ tipo: "eliminar", id });
+  };
 
   const eliminarFuncionario = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/EliminarFuncionario", {
+      const res = await apiFetch("/EliminarFuncionario", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: modalConfirmacion.id }),
@@ -176,7 +194,7 @@ export default function GestionFuncionarios() {
         setMostrarModalExito(true);
         cargarFuncionarios();
       } else {
-        alert(data.message || "Error al eliminar funcionario");
+        mostrarError(data.message || "Error al eliminar funcionario. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
       console.error("Error al eliminar funcionario:", error);
@@ -200,6 +218,10 @@ export default function GestionFuncionarios() {
           <h1 className="text-2xl font-bold text-gray-800">Gestión de Funcionarios</h1>
           <button
             onClick={() => {
+              if (!tienePermiso('CrearFuncionario')) {
+                mostrarError("No tienes permiso para crear funcionarios");
+                return;
+              }
               setFormData({
                 id: null,
                 nombre: "",
@@ -215,7 +237,7 @@ export default function GestionFuncionarios() {
             }}
             className="bg-[#008658] text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
           >
-            Nuevo Funcionario
+            Crear Funcionario
           </button>
         </div>
 
@@ -297,6 +319,14 @@ export default function GestionFuncionarios() {
       )}
 
       {mostrarModalExito && <ModalExito cerrarModal={() => setMostrarModalExito(false)} />}
+
+      {/* Modal de error */}
+      <ModalError
+        mostrar={modalError.mostrar}
+        titulo={modalError.titulo}
+        mensaje={modalError.mensaje}
+        onCerrar={cerrarError}
+      />
     </div>
   );
 }
@@ -347,7 +377,7 @@ const ModalEmpleado = ({
           <option value="CC">Cédula de ciudadanía</option>
           <option value="TI">Tarjeta de identidad</option>
           <option value="CE">Cédula de extranjería</option>
-        </select>git
+        </select>
         <input
           type="text"
           name="nit"

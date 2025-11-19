@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Bar, Pie, Doughnut } from 'react-chartjs-2';
@@ -6,7 +5,7 @@ import { Bar, Pie, Doughnut } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 function GraficaInventario() {
-  const navigate = useNavigate();
+
 
   // Estados para inventario
   const [productosInventario, setProductosInventario] = useState<any[]>([]);
@@ -134,12 +133,6 @@ function GraficaInventario() {
       {/* Header */}
       <header className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-[#008658]">Gráficas de Inventario</h1>
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
-        >
-          Volver
-        </button>
       </header>
 
       {/* Tarjetas de estadísticas */}

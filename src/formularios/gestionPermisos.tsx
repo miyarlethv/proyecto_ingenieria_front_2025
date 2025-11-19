@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { apiFetch, TODOS_LOS_PERMISOS, tienePermiso } from "../api";
 import type { ChangeEvent, FormEvent } from "react";
 import { Pencil, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
+import ModalError from "../components/ModalError";
+import { useModalError } from "../hooks/useModalError";
 
 export default function GestionPermisos() {
+  const { modalError, mostrarError, cerrarError } = useModalError();
   const [permisos, setPermisos] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -28,8 +32,8 @@ export default function GestionPermisos() {
 
   const cargarPermisos = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/ListarPermisos");
-      const data = await res.json();
+  const res = await apiFetch("/ListarPermisos");
+  const data = await res.json();
       // Validación para evitar errores de formato
       if (Array.isArray(data)) {
         setPermisos(data);
@@ -57,8 +61,29 @@ export default function GestionPermisos() {
   // =========================
   const crearPermiso = async (e: FormEvent) => {
     e.preventDefault();
+    
+    // Verificar autenticación
+    const token = localStorage.getItem("token");
+    const tipo = localStorage.getItem("tipo");
+    
+    console.log("🔑 Token:", token ? `${token.substring(0, 20)}...` : "NO HAY TOKEN");
+    console.log("👤 Tipo de usuario:", tipo);
+    
+    if (!token || tipo !== "fundacion") {
+      mostrarError("Debes iniciar sesión como fundación para crear permisos");
+      window.location.href = "/inicio_sesion";
+      return;
+    }
+
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/CrearPermiso", {
+      console.log("📤 Enviando petición a /CrearPermiso");
+      console.log("📦 Datos:", {
+        name: formData.name.trim(),
+        descripcion: formData.descripcion.trim(),
+        url: formData.url.trim(),
+      });
+      
+      const response = await apiFetch("/CrearPermiso", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -70,8 +95,33 @@ export default function GestionPermisos() {
           url: formData.url.trim(),
         }),
       });
+      
+      console.log("📥 Respuesta recibida - Status:", response.status);
 
-      const data = await response.json();
+      // Verificar si la respuesta es JSON válido ANTES de intentar parsearlo
+      const contentType = response.headers.get("content-type");
+      const text = await response.text();
+      
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("❌ El servidor NO devolvió JSON:");
+        console.error("Status:", response.status);
+        console.error("Content-Type:", contentType);
+        console.error("Respuesta completa:", text.substring(0, 500));
+        
+        mostrarError(`Error del servidor (${response.status}):\n${response.statusText}\n\nVerifica la consola para más detalles.`);
+        return;
+      }
+
+      // Intentar parsear el JSON solo si el Content-Type es correcto
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (jsonError) {
+        console.error("❌ Error al parsear JSON:", jsonError);
+        console.error("Texto recibido:", text.substring(0, 500));
+        mostrarError("El servidor devolvió una respuesta inválida. Verifica la consola.");
+        return;
+      }
 
       if (response.ok) {
         setIsModalOpen(false);
@@ -79,11 +129,15 @@ export default function GestionPermisos() {
         setMostrarModalExito(true);
         cargarPermisos();
       } else {
-        alert(data.message || "Error al crear el permiso");
+        mostrarError(data.message || "Error al crear el permiso. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
-      console.error("Error al crear permiso:", error);
-      alert("Error al conectar con el servidor");
+      console.error("❌ Error al crear permiso:", error);
+      if (error instanceof Error) {
+        mostrarError(`Error: ${error.message}`);
+      } else {
+        mostrarError("Error al conectar con el servidor");
+      }
     }
   };
 
@@ -91,6 +145,10 @@ export default function GestionPermisos() {
   // 🔹 Abrir modal editar
   // =========================
   const abrirEditar = (permiso: any) => {
+    if (!tienePermiso('ActualizarPermiso')) {
+      mostrarError("No tienes permiso para editar permisos");
+      return;
+    }
     setFormData({
       id: permiso.id,
       name: permiso.name,
@@ -106,7 +164,7 @@ export default function GestionPermisos() {
   // =========================
   const actualizarPermiso = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/ActualizarPermiso", {
+      const response = await apiFetch("/ActualizarPermiso", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -128,11 +186,11 @@ export default function GestionPermisos() {
         setMostrarModalExito(true);
         cargarPermisos();
       } else {
-        alert(data.message || "Error al actualizar el permiso");
+        mostrarError(data.message || "Error al actualizar el permiso. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
       console.error("Error al actualizar permiso:", error);
-      alert("Error al conectar con el servidor");
+      mostrarError("Error al conectar con el servidor");
     }
   };
 
@@ -141,7 +199,7 @@ export default function GestionPermisos() {
   // =========================
   const eliminarPermiso = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/EliminarPermiso", {
+      const response = await apiFetch("/EliminarPermiso", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -157,11 +215,11 @@ export default function GestionPermisos() {
         setMostrarModalExito(true);
         cargarPermisos();
       } else {
-        alert(data.message || "Error al eliminar el permiso");
+        mostrarError(data.message || "Error al eliminar el permiso. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
       console.error("Error al eliminar permiso:", error);
-      alert("Error al conectar con el servidor");
+      mostrarError("Error al conectar con el servidor");
     }
   };
 
@@ -182,7 +240,7 @@ export default function GestionPermisos() {
             }}
             className="bg-[#008658] text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
           >
-            Nuevo Permiso
+            Crear Permiso
           </button>
         </div>
 
@@ -242,6 +300,7 @@ export default function GestionPermisos() {
           titulo={isEditing ? "Editar Permiso" : "Nuevo Permiso"}
           formData={formData}
           handleChange={handleChange}
+          setFormData={setFormData}
           cerrar={() => setIsModalOpen(false)}
           handleSubmit={(e) => {
             e.preventDefault();
@@ -269,6 +328,14 @@ export default function GestionPermisos() {
       {mostrarModalExito && (
         <ModalExito cerrarModal={() => setMostrarModalExito(false)} />
       )}
+
+      {/* Modal de error */}
+      <ModalError
+        mostrar={modalError.mostrar}
+        titulo={modalError.titulo}
+        mensaje={modalError.mensaje}
+        onCerrar={cerrarError}
+      />
     </div>
   );
 }
@@ -283,56 +350,165 @@ const ModalPermiso: React.FC<{
   handleChange: (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
+  setFormData: React.Dispatch<React.SetStateAction<any>>;
   cerrar: () => void;
   handleSubmit: (e: FormEvent) => void;
-}> = ({ titulo, formData, handleChange, cerrar, handleSubmit }) => (
-  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-    <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg">
-      <h2 className="text-xl font-semibold mb-4 text-center">{titulo}</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="name"
-          placeholder="Nombre del permiso"
-          value={formData.name}
-          onChange={handleChange}
-          className="border rounded-lg p-2 w-full"
-          required
-        />
-        <textarea
-          name="descripcion"
-          placeholder="Descripción"
-          value={formData.descripcion}
-          onChange={handleChange}
-          className="border rounded-lg p-2 w-full"
-        />
-        <input
-          type="text"
-          name="url"
-          placeholder="URL"
-          value={formData.url}
-          onChange={handleChange}
-          className="border rounded-lg p-2 w-full"
-        />
-        <div className="flex justify-end gap-4 mt-4">
-          <button
-            type="button"
-            onClick={cerrar}
-            className="px-4 py-2 border border-gray-400 rounded"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="bg-[#008658] text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            Guardar
-          </button>
+}> = ({ titulo, formData, handleChange, setFormData, cerrar, handleSubmit }) => {
+  const [sugerenciasNombre, setSugerenciasNombre] = useState<typeof TODOS_LOS_PERMISOS>([]);
+  const [sugerenciasUrl, setSugerenciasUrl] = useState<typeof TODOS_LOS_PERMISOS>([]);
+  const [mostrarSugerenciasNombre, setMostrarSugerenciasNombre] = useState(false);
+  const [mostrarSugerenciasUrl, setMostrarSugerenciasUrl] = useState(false);
+
+  // Filtrar sugerencias para nombre
+  const filtrarSugerenciasNombre = (valor: string) => {
+    if (valor.length === 0) {
+      setSugerenciasNombre([]);
+      setMostrarSugerenciasNombre(false);
+      return;
+    }
+    const filtradas = TODOS_LOS_PERMISOS.filter(p => 
+      p.nombre.toLowerCase().includes(valor.toLowerCase())
+    );
+    setSugerenciasNombre(filtradas);
+    setMostrarSugerenciasNombre(filtradas.length > 0);
+  };
+
+  // Filtrar sugerencias para URL
+  const filtrarSugerenciasUrl = (valor: string) => {
+    if (valor.length === 0) {
+      setSugerenciasUrl([]);
+      setMostrarSugerenciasUrl(false);
+      return;
+    }
+    const filtradas = TODOS_LOS_PERMISOS.filter(p => 
+      p.url.toLowerCase().includes(valor.toLowerCase())
+    );
+    setSugerenciasUrl(filtradas);
+    setMostrarSugerenciasUrl(filtradas.length > 0);
+  };
+
+  // Seleccionar sugerencia (auto-rellena ambos campos)
+  const seleccionarPermiso = (permiso: typeof TODOS_LOS_PERMISOS[0]) => {
+    // Actualizar directamente el formData completo con ambos valores
+    setFormData((prev: any) => ({
+      ...prev,
+      name: permiso.nombre,
+      url: permiso.url
+    }));
+    
+    setMostrarSugerenciasNombre(false);
+    setMostrarSugerenciasUrl(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+      <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg">
+        <h2 className="text-xl font-semibold mb-4 text-center">{titulo}</h2>
+        
+        {/* Aviso informativo */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-800">
+          <p className="font-semibold mb-1">💡 Tip: Usa el autocompletado</p>
+          <p>Escribe en Nombre o URL y selecciona de la lista para auto-rellenar ambos campos correctamente.</p>
         </div>
-      </form>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Campo Nombre con autocompletado */}
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del permiso *</label>
+            <input
+              type="text"
+              name="name"
+              placeholder="Ej: Crear Mascotas"
+              value={formData.name}
+              onChange={(e) => {
+                handleChange(e);
+                filtrarSugerenciasNombre(e.target.value);
+              }}
+              onFocus={(e) => filtrarSugerenciasNombre(e.target.value)}
+              onBlur={() => setTimeout(() => setMostrarSugerenciasNombre(false), 200)}
+              className="border border-gray-300 rounded-lg p-2 w-full focus:ring-2 focus:ring-[#008658] focus:border-transparent"
+              required
+              autoComplete="off"
+            />
+            {mostrarSugerenciasNombre && sugerenciasNombre.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {sugerenciasNombre.map((permiso, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => seleccionarPermiso(permiso)}
+                    className="px-4 py-2 hover:bg-[#008658] hover:text-white cursor-pointer border-b last:border-b-0"
+                  >
+                    <div className="font-medium">{permiso.nombre}</div>
+                    <div className="text-xs opacity-75">URL: {permiso.url} • {permiso.categoria}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <textarea
+            name="descripcion"
+            placeholder="Descripción (opcional)"
+            value={formData.descripcion}
+            onChange={handleChange}
+            className="border border-gray-300 rounded-lg p-2 w-full focus:ring-2 focus:ring-[#008658] focus:border-transparent"
+            rows={3}
+          />
+
+          {/* Campo URL con autocompletado */}
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">URL *</label>
+            <input
+              type="text"
+              name="url"
+              placeholder="Ej: CrearMascotas"
+              value={formData.url}
+              onChange={(e) => {
+                handleChange(e);
+                filtrarSugerenciasUrl(e.target.value);
+              }}
+              onFocus={(e) => filtrarSugerenciasUrl(e.target.value)}
+              onBlur={() => setTimeout(() => setMostrarSugerenciasUrl(false), 200)}
+              className="border border-gray-300 rounded-lg p-2 w-full focus:ring-2 focus:ring-[#008658] focus:border-transparent"
+              required
+              autoComplete="off"
+            />
+            {mostrarSugerenciasUrl && sugerenciasUrl.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {sugerenciasUrl.map((permiso, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => seleccionarPermiso(permiso)}
+                    className="px-4 py-2 hover:bg-[#008658] hover:text-white cursor-pointer border-b last:border-b-0"
+                  >
+                    <div className="font-medium">{permiso.url}</div>
+                    <div className="text-xs opacity-75">Nombre: {permiso.nombre} • {permiso.categoria}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-4 mt-4">
+            <button
+              type="button"
+              onClick={cerrar}
+              className="px-4 py-2 border border-gray-400 rounded hover:bg-gray-100 transition"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="bg-[#008658] text-white px-4 py-2 rounded hover:bg-green-700 transition"
+            >
+              Guardar
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const ModalConfirmacion: React.FC<{
   tipo: "eliminar" | "actualizar";

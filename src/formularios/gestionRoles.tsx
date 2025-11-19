@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { apiFetch, tienePermiso } from "../api";
 import type { ChangeEvent, FormEvent } from "react";
 import { Pencil, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
+import ModalError from "../components/ModalError";
+import { useModalError } from "../hooks/useModalError";
 
 const GestionRoles: React.FC = () => {
+  const { modalError, mostrarError, cerrarError } = useModalError();
+  
   // =========================
   // 🔹 Estados principales
   // =========================
@@ -34,8 +39,8 @@ const GestionRoles: React.FC = () => {
 
   const cargarRoles = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/ListarRoles");
-      const data = await res.json();
+  const res = await apiFetch("/ListarRoles");
+  const data = await res.json();
       console.log("📦 Roles recibidos:", data);
       setRoles(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -46,8 +51,8 @@ const GestionRoles: React.FC = () => {
 
   const cargarPermisos = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/ListarPermisos");
-      const data = await res.json();
+  const res = await apiFetch("/ListarPermisos");
+  const data = await res.json();
       console.log("📦 Permisos recibidos:", data);
       setPermisos(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -83,7 +88,7 @@ const GestionRoles: React.FC = () => {
     try {
       console.log("📦 Enviando datos:", formData);
 
-      const response = await fetch("http://127.0.0.1:8000/api/CrearRol", {
+      const response = await apiFetch("/CrearRol", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -106,11 +111,11 @@ const GestionRoles: React.FC = () => {
         cargarRoles();
       } else {
         console.error("❌ Error en la creación:", data);
-        alert(data.message || "Error al crear el rol");
+        mostrarError(data.message || "Error al crear el rol. Verifica que tengas los permisos necesarios.");
       }
     } catch (error) {
       console.error("💥 Error al crear rol:", error);
-      alert("Error al conectar con el servidor");
+      mostrarError("Error al conectar con el servidor");
     }
   };
 
@@ -118,6 +123,10 @@ const GestionRoles: React.FC = () => {
   // 🔹 Editar rol
   // =========================
   const abrirEditar = (rol: any) => {
+    if (!tienePermiso('ActualizarRol')) {
+      mostrarError("No tienes permiso para editar roles");
+      return;
+    }
     setEditData({
       ...rol,
       permisos:
@@ -148,7 +157,7 @@ const GestionRoles: React.FC = () => {
 
   const actualizarRol = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/ActualizarRol", {
+      const response = await apiFetch("/ActualizarRol", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -175,12 +184,17 @@ const GestionRoles: React.FC = () => {
   // =========================
   // 🔹 Eliminar rol
   // =========================
-  const confirmarEliminar = (id: number) =>
+  const confirmarEliminar = (id: number) => {
+    if (!tienePermiso('EliminarRol')) {
+      mostrarError("No tienes permiso para eliminar roles");
+      return;
+    }
     setModalConfirmacion({ tipo: "eliminar", id });
+  };
 
   const eliminarRol = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/EliminarRol", {
+      const response = await apiFetch("/EliminarRol", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: modalConfirmacion.id }),
@@ -202,8 +216,8 @@ const GestionRoles: React.FC = () => {
   // 🔹 Render principal
   // =========================
   return (
-    <div className="p-8 bg-gray-50 min-h-screen flex justify-center items-start">
-      <div className="bg-white shadow-lg rounded-2xl p-6 w-full max-w-5xl border border-gray-200">
+    <div className="w-[95%] mx-auto bg-white p-6 rounded-2xl shadow">
+      <div className="bg-white shadow-lg rounded-2xl p-6 w-full border border-gray-200">
         {/* Encabezado */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Gestión de Roles</h1>
@@ -215,47 +229,66 @@ const GestionRoles: React.FC = () => {
           </button>
         </div>
 
-        {/* Listado de Roles */}
-        <div className="border-2 border-gray-300 rounded-xl h-72 p-4 overflow-y-auto">
-          {roles.length > 0 ? (
-            roles.map((rol) => (
-              <div
-                key={rol.id}
-                className="border-b py-2 flex justify-between items-center"
-              >
-                <div>
-                  <p className="font-semibold">{rol.name}</p>
-                  <p className="text-sm text-gray-600">
-                    {rol.descripcion || "Sin descripción"}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Permisos:{" "}
-                    {(rol.permissions || rol.permisos)?.length
-                      ? (rol.permissions || rol.permisos)
-                          .map((p: any) => p.name)
-                          .join(", ")
-                      : "—"}
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button onClick={() => abrirEditar(rol)}>
-                    <Pencil size={20} />
-                  </button>
-                  <button
-                    onClick={() => confirmarEliminar(rol.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    <Trash2 size={20} />
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-center text-gray-500 mt-10">
-              No hay roles registrados
-            </p>
-          )}
-        </div>
+        {/* Tabla de Roles */}
+        <table className="w-full border rounded-lg overflow-hidden">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="p-2">Nombre Rol</th>
+              <th className="p-2">Descripción</th>
+              <th className="p-2">Permisos</th>
+              <th className="p-2 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {roles.length > 0 ? (
+              roles.map((rol) => (
+                <tr key={rol.id} className="border-b text-center">
+                  <td className="p-2">{rol.name}</td>
+                  <td className="p-2">{rol.descripcion || "Sin descripción"}</td>
+                  <td className="p-2">
+                    {(rol.permissions || rol.permisos)?.length ? (
+                      <div className="space-y-1">
+                        {(rol.permissions || rol.permisos).map((p: any, index: number) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-center gap-2 text-sm text-gray-700"
+                          >
+                            <CheckCircle2 size={14} className="text-green-600 flex-shrink-0" />
+                            <span>{p.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-sm">Sin permisos</span>
+                    )}
+                  </td>
+                  <td className="flex justify-center gap-4 py-2">
+                    <button
+                      onClick={() => abrirEditar(rol)}
+                      className="text-black hover:text-blue-700"
+                      title="Editar"
+                    >
+                      <Pencil size={20} />
+                    </button>
+                    <button
+                      onClick={() => confirmarEliminar(rol.id)}
+                      className="text-red-600 hover:text-red-800"
+                      title="Eliminar"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={4} className="text-center text-gray-500 p-4">
+                  No hay roles registrados.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Modales */}
@@ -301,6 +334,14 @@ const GestionRoles: React.FC = () => {
       {mostrarModalExito && (
         <ModalExito cerrarModal={() => setMostrarModalExito(false)} />
       )}
+
+      {/* Modal de error */}
+      <ModalError
+        mostrar={modalError.mostrar}
+        titulo={modalError.titulo}
+        mensaje={modalError.mensaje}
+        onCerrar={cerrarError}
+      />
     </div>
   );
 };

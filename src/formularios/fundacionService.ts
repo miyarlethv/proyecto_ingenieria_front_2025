@@ -10,11 +10,10 @@ const fundacionService = {
 
     // POST (crear) o PUT (actualizar) según si hay ID
     crear: (data: FormData) => {
-        return axios.post(`${API_URL}/crearFundacion`, data, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
+        // Registro público: no enviamos Authorization aquí para garantizar
+        // que cualquier usuario (no autenticado) pueda crear una fundación.
+        // No fijamos Content-Type: axios lo establecerá correctamente para FormData
+        return axios.post(`${API_URL}/crearFundacion`, data);
     },
 
     traerPersonaId: (data: any) => {

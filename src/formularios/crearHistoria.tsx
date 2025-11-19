@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { CheckCircle2, Trash2, Pencil, AlertTriangle } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { Trash2, Pencil, CheckCircle2, AlertTriangle, Download } from "lucide-react";
+import { apiFetch, tienePermiso } from "../api";
+import jsPDF from "jspdf";
+import ModalError from "../components/ModalError";
+import { useModalError } from "../hooks/useModalError";
 
 const CrearHistoria: React.FC = () => {
+  const { modalError, mostrarError, cerrarError } = useModalError();
+  
   // 🔹 Estados
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -17,23 +23,25 @@ const CrearHistoria: React.FC = () => {
     fecha: "",
     descripcion: "",
     nombre_responsable: "",
-    telefono: "", // usaremos este campo para la edad
+    telefono: "",
     cargo: "",
     tipo: "",
   });
   const [editData, setEditData] = useState<any>(null);
   const [error, setError] = useState("");
   const [historias, setHistorias] = useState<any[]>([]);
-  const [roles, setRoles] = useState<Rol[]>([]);
+  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [mascotas, setMascotas] = useState<Mascota[]>([]);
 
-  const navigate = useNavigate();
   const { mascotaId } = useParams();
 
   // 🔹 Interfaces
-  interface Rol {
+  interface Funcionario {
     id: number;
     nombre: string;
+    email: string;
+    roles: string[];
+    rol_principal: string;
   }
 
   interface Mascota {
@@ -42,20 +50,28 @@ const CrearHistoria: React.FC = () => {
     edad: string;
   }
 
-  // 🔹 Cargar roles y mascotas
+  // 🔹 Cargar funcionarios y mascotas
   useEffect(() => {
-    const obtenerRoles = async () => {
+    const obtenerFuncionarios = async () => {
       try {
-        const respuesta = await fetch("http://127.0.0.1:8000/api/ListarRoles");
+        // ✅ Esta ruta es pública, no necesita token
+        const respuesta = await fetch("http://127.0.0.1:8000/api/ListarFuncionariosConRoles");
+        console.log("📡 Respuesta funcionarios:", respuesta.status, respuesta.ok);
+        if (!respuesta.ok) {
+          console.error("❌ Error al cargar funcionarios:", respuesta.status);
+          return;
+        }
         const data = await respuesta.json();
-        setRoles(data);
+        console.log("📋 Funcionarios obtenidos:", data);
+        setFuncionarios(data);
       } catch (error) {
-        console.error("Error al obtener los roles:", error);
+        console.error("❌ Error al obtener los funcionarios:", error);
       }
     };
 
     const obtenerMascotas = async () => {
       try {
+        // ✅ Esta ruta también es pública
         const respuesta = await fetch("http://127.0.0.1:8000/api/mascotas");
         const data = await respuesta.json();
         setMascotas(data);
@@ -64,12 +80,18 @@ const CrearHistoria: React.FC = () => {
       }
     };
 
-    obtenerRoles();
+    obtenerFuncionarios();
     obtenerMascotas();
   }, []);
 
   // 🔹 Abrir y cerrar modales
-  const abrirModal = () => setIsModalOpen(true);
+  const abrirModal = () => {
+    if (!tienePermiso('CrearHistoriaClinica')) {
+      mostrarError("No tienes permiso para crear historias clínicas");
+      return;
+    }
+    setIsModalOpen(true);
+  };
   const cerrarModal = () => {
     setIsModalOpen(false);
     setError("");
@@ -83,7 +105,7 @@ const CrearHistoria: React.FC = () => {
   const cerrarModalConfirmacion = () =>
     setModalConfirmacion({ tipo: null, historiaId: undefined });
 
-  const cerrarModalExito = () => setMostrarModalExito(false);
+  // const cerrarModalExito = () => setMostrarModalExito(false);
 
   // 🔹 Manejo de inputs
   const handleChange = (
@@ -91,12 +113,19 @@ const CrearHistoria: React.FC = () => {
   ) => {
     const { name, value } = e.target;
 
-    // Si cambia el nombre de la mascota, traemos su edad automáticamente
+    // Si cambia el nombre del responsable (funcionario), traemos su rol automáticamente
     if (name === "nombre_responsable") {
-      const mascotaSeleccionada = mascotas.find((m) => m.nombre === value);
+      const funcionarioSeleccionado = funcionarios.find((f) => f.nombre === value);
       setFormData({
         ...formData,
         nombre_responsable: value,
+        cargo: funcionarioSeleccionado ? funcionarioSeleccionado.rol_principal : "",
+      });
+    } else if (name === "mascota_nombre") {
+      // Si cambia la mascota, traemos su edad automáticamente
+      const mascotaSeleccionada = mascotas.find((m) => m.nombre === value);
+      setFormData({
+        ...formData,
         telefono: mascotaSeleccionada ? mascotaSeleccionada.edad : "",
       });
     } else {
@@ -107,53 +136,77 @@ const CrearHistoria: React.FC = () => {
   const handleEditChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    setEditData({ ...editData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === "nombre_responsable") {
+      const funcionarioSeleccionado = funcionarios.find((f) => f.nombre === value);
+      setEditData({
+        ...editData,
+        nombre_responsable: value,
+        cargo: funcionarioSeleccionado ? funcionarioSeleccionado.rol_principal : "",
+      });
+    } else {
+      setEditData({ ...editData, [name]: value });
+    }
   };
 
   // 🔹 Crear historia clínica
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
 
     const dataAEnviar = { mascota_id: mascotaId, ...formData };
 
-    fetch("http://127.0.0.1:8000/api/CrearHistoriaClinica", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dataAEnviar),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("No se pudo guardar la historia clínica");
-        return res.json();
-      })
-      .then(() => {
-        setFormData({
-          fecha: "",
-          descripcion: "",
-          nombre_responsable: "",
-          telefono: "",
-          cargo: "",
-          tipo: "",
-        });
-        cerrarModal();
-        setMostrarModalExito(true);
-        cargarHistorias();
-      })
-      .catch(() =>
-        setError("❌ Ocurrió un error al guardar la historia clínica.")
-      );
+    try {
+      // ✅ USAR apiFetch para enviar el token automáticamente
+      const response = await apiFetch("CrearHistoriaClinica", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataAEnviar),
+      });
+
+      if (!response.ok) {
+        throw new Error("No se pudo guardar la historia clínica");
+      }
+
+      await response.json();
+
+      setFormData({
+        fecha: "",
+        descripcion: "",
+        nombre_responsable: "",
+        telefono: "",
+        cargo: "",
+        tipo: "",
+      });
+      cerrarModal();
+      setMostrarModalExito(true);
+      cargarHistorias();
+    } catch (err) {
+      console.error("❌ Error al guardar:", err);
+      setError("❌ Ocurrió un error al guardar la historia clínica.");
+    }
   };
 
   // 🔹 Cargar historias
-  const cargarHistorias = () => {
+  const cargarHistorias = async () => {
     if (!mascotaId) return;
 
-    fetch(
-      `http://127.0.0.1:8000/api/ListarHistoriasClinicas?mascota_id=${mascotaId}`
-    )
-      .then((res) => res.json())
-      .then((data) => setHistorias(data.data || []))
-      .catch((err) => console.error("Error al cargar historias:", err));
+    try {
+      // ✅ USAR apiFetch para enviar el token
+      const response = await apiFetch(
+        `ListarHistoriasClinicas?mascota_id=${mascotaId}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al cargar historias");
+      }
+
+      const data = await response.json();
+      setHistorias(data.data || []);
+    } catch (err) {
+      console.error("❌ Error al cargar historias:", err);
+    }
   };
 
   useEffect(() => {
@@ -162,6 +215,10 @@ const CrearHistoria: React.FC = () => {
 
   // 🔹 Confirmar eliminación
   const confirmarEliminar = (id: number) => {
+    if (!tienePermiso('EliminarHistoriaClinica')) {
+      mostrarError("No tienes permiso para eliminar historias clínicas");
+      return;
+    }
     setModalConfirmacion({ tipo: "eliminar", historiaId: id });
   };
 
@@ -171,25 +228,36 @@ const CrearHistoria: React.FC = () => {
   };
 
   // 🔹 Eliminar historia
-  const eliminarHistoria = () => {
+  const eliminarHistoria = async () => {
     if (!modalConfirmacion.historiaId) return;
 
-    fetch("http://127.0.0.1:8000/api/EliminarHistoriaClinica", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: modalConfirmacion.historiaId }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("No se pudo eliminar");
-        setModalConfirmacion({ tipo: null });
-        setMostrarModalExito(true);
-        cargarHistorias();
-      })
-      .catch(() => alert("Error al eliminar la historia clínica"));
+    try {
+      // ✅ USAR apiFetch para enviar el token
+      const response = await apiFetch("EliminarHistoriaClinica", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: modalConfirmacion.historiaId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("No se pudo eliminar");
+      }
+
+      setModalConfirmacion({ tipo: null });
+      setMostrarModalExito(true);
+      cargarHistorias();
+    } catch (err) {
+      console.error("❌ Error al eliminar:", err);
+      mostrarError("Error al eliminar la historia clínica. Verifica que tengas los permisos necesarios.");
+    }
   };
 
   // 🔹 Abrir modal de edición
   const abrirModalEditar = (historia: any) => {
+    if (!tienePermiso('ActualizarHistoriaClinica')) {
+      mostrarError("No tienes permiso para editar historias clínicas");
+      return;
+    }
     setEditData(historia);
     setIsEditModalOpen(true);
   };
@@ -201,88 +269,200 @@ const CrearHistoria: React.FC = () => {
   };
 
   // 🔹 Actualizar historia clínica
-  const actualizarHistoria = () => {
-    fetch("http://127.0.0.1:8000/api/ActualizarHistoriaClinica", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editData),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Error al actualizar");
-        cerrarEditModal();
-        setModalConfirmacion({ tipo: null });
-        setMostrarModalExito(true);
-        cargarHistorias();
-      })
-      .catch(() => alert("Ocurrió un error al actualizar"));
+  const actualizarHistoria = async () => {
+    try {
+      // ✅ USAR apiFetch para enviar el token
+      const response = await apiFetch("ActualizarHistoriaClinica", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al actualizar");
+      }
+
+      cerrarEditModal();
+      setModalConfirmacion({ tipo: null });
+      setMostrarModalExito(true);
+      cargarHistorias();
+    } catch (err) {
+      console.error("❌ Error al actualizar:", err);
+      mostrarError("Ocurrió un error al actualizar. Verifica que tengas los permisos necesarios.");
+    }
+  };
+
+  // 🔹 Descargar historias clínicas en PDF
+  const descargarPDF = async () => {
+    if (historias.length === 0) {
+      mostrarError("No hay historias clínicas para descargar");
+      return;
+    }
+
+    try {
+      // Obtener el nombre de la mascota
+      const mascota = mascotas.find((m) => m.id === Number(mascotaId));
+      const nombreMascota = mascota ? mascota.nombre : "Mascota";
+
+      const doc = new jsPDF();
+      
+      // Título del documento
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Historia Clínica - ${nombreMascota}`, 105, 20, { align: "center" });
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Fecha de generación: ${new Date().toLocaleDateString()}`, 105, 28, { align: "center" });
+      
+      let yPosition = 40;
+
+      // Agregar cada historia clínica
+      historias.forEach((historia, index) => {
+        // Verificar si necesitamos una nueva página
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        // Separador
+        if (index > 0) {
+          doc.setDrawColor(200, 200, 200);
+          doc.line(20, yPosition, 190, yPosition);
+          yPosition += 8;
+        }
+
+        // Número de registro
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Registro #${index + 1}`, 20, yPosition);
+        yPosition += 8;
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        
+        // Fecha
+        doc.text("Fecha:", 20, yPosition);
+        doc.setFont("helvetica", "normal");
+        doc.text(historia.fecha || "N/A", 50, yPosition);
+        yPosition += 6;
+
+        // Tipo de procedimiento
+        doc.setFont("helvetica", "bold");
+        doc.text("Tipo:", 20, yPosition);
+        doc.setFont("helvetica", "normal");
+        doc.text(historia.tipo || "N/A", 50, yPosition);
+        yPosition += 6;
+
+        // Responsable
+        doc.setFont("helvetica", "bold");
+        doc.text("Responsable:", 20, yPosition);
+        doc.setFont("helvetica", "normal");
+        doc.text(historia.nombre_responsable || "N/A", 50, yPosition);
+        yPosition += 6;
+
+        // Cargo
+        doc.setFont("helvetica", "bold");
+        doc.text("Cargo:", 20, yPosition);
+        doc.setFont("helvetica", "normal");
+        doc.text(historia.cargo || "N/A", 50, yPosition);
+        yPosition += 6;
+
+        // Descripción
+        doc.setFont("helvetica", "bold");
+        doc.text("Descripción:", 20, yPosition);
+        yPosition += 5;
+        doc.setFont("helvetica", "normal");
+        
+        // Dividir la descripción en líneas si es muy larga
+        const descripcion = historia.descripcion || "N/A";
+        const lineasDescripcion = doc.splitTextToSize(descripcion, 170);
+        doc.text(lineasDescripcion, 20, yPosition);
+        yPosition += lineasDescripcion.length * 5 + 8;
+      });
+
+      // Descargar el PDF
+      doc.save(`Historia_Clinica_${nombreMascota}_${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error("Error al generar PDF:", error);
+      mostrarError("Error al generar el PDF");
+    }
   };
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen flex justify-center items-start">
-      {/* Contenedor principal */}
-      <div className="bg-white shadow-lg rounded-2xl p-6 w-full max-w-5xl border border-gray-200">
+    <div className="w-[95%] mx-auto bg-white p-6 rounded-2xl shadow">
+      <div className="bg-white shadow-lg rounded-2xl p-6 w-full border border-gray-200">
         {/* Encabezado */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Historia clínica</h1>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <button
-              onClick={() => navigate("/HistoriaClinica")}
-              className="bg-[#008658] text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+              onClick={descargarPDF}
+              className="bg-[#008658] text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+              title="Descargar todas las historias en PDF"
             >
-              Volver
+              <Download size={18} />
+              Descargar PDF
             </button>
+            
             <button
               onClick={abrirModal}
               className="bg-[#008658] text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
             >
-              Agregar
+              Crear Historia
             </button>
           </div>
         </div>
 
-        {/* Listado de historias */}
-        <div className="border-2 border-gray-300 rounded-xl h-64 p-4 overflow-y-auto">
-          {historias.length > 0 ? (
-            <ul className="space-y-3">
-              {historias.map((historia) => (
-                <li
-                  key={historia.id}
-                  className="border-b pb-2 flex justify-between items-center"
-                >
-                  <div>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-semibold">Fecha:</span> {historia.fecha}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-semibold">Tipo:</span> {historia.tipo}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-semibold">Descripción:</span> {historia.descripcion}
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
+        {/* Tabla de historias */}
+        <table className="w-full border rounded-lg overflow-hidden">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="p-2">Fecha</th>
+              <th className="p-2">Tipo</th>
+              <th className="p-2">Descripción</th>
+              <th className="p-2">Responsable</th>
+              <th className="p-2">Cargo</th>
+              <th className="p-2 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {historias.length > 0 ? (
+              historias.map((historia) => (
+                <tr key={historia.id} className="border-b hover:bg-gray-50">
+                  <td className="p-2 text-center">{historia.fecha}</td>
+                  <td className="p-2">{historia.tipo}</td>
+                  <td className="p-2">{historia.descripcion}</td>
+                  <td className="p-2">{historia.nombre_responsable}</td>
+                  <td className="p-2">{historia.cargo}</td>
+                  <td className="p-2 flex justify-center gap-4">
                     <button
                       onClick={() => abrirModalEditar(historia)}
-                      className="text-black hover:text-black transition"
+                      className="text-black hover:text-blue-700"
+                      title="Editar"
                     >
                       <Pencil size={20} />
                     </button>
+                    
                     <button
                       onClick={() => confirmarEliminar(historia.id)}
-                      className="text-red-600 hover:text-red-800 transition"
+                      className="text-red-600 hover:text-red-800"
+                      title="Eliminar"
                     >
                       <Trash2 size={20} />
                     </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-500 text-center mt-10">
-              No hay historias clínicas registradas aún.
-            </p>
-          )}
-        </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="text-center text-gray-500 p-4">
+                  No hay historias clínicas registradas aún.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* 🟢 Modal de creación */}
@@ -294,8 +474,7 @@ const CrearHistoria: React.FC = () => {
           handleSubmit={handleSubmit}
           cerrarModal={cerrarModal}
           error={error}
-          roles={roles}
-          mascotas={mascotas}
+          funcionarios={funcionarios}
         />
       )}
 
@@ -308,8 +487,7 @@ const CrearHistoria: React.FC = () => {
           handleSubmit={handleEditSubmit}
           cerrarModal={cerrarEditModal}
           error={error}
-          roles={roles}
-          mascotas={mascotas}
+          funcionarios={funcionarios}
         />
       )}
 
@@ -327,7 +505,15 @@ const CrearHistoria: React.FC = () => {
       )}
 
       {/* 🟢 Modal de éxito */}
-      {mostrarModalExito && <ModalExito cerrarModal={cerrarModalExito} />}
+      {mostrarModalExito && <ModalExito cerrarModal={() => setMostrarModalExito(false)} />}
+
+      {/* Modal de error */}
+      <ModalError
+        mostrar={modalError.mostrar}
+        titulo={modalError.titulo}
+        mensaje={modalError.mensaje}
+        onCerrar={cerrarError}
+      />
     </div>
   );
 };
@@ -346,8 +532,7 @@ interface ModalProps {
   handleSubmit: (e: FormEvent) => void;
   cerrarModal: () => void;
   error: string;
-  roles: any[];
-  mascotas: any[];
+  funcionarios: any[];
 }
 
 const ModalHistoria: React.FC<ModalProps> = ({
@@ -357,123 +542,175 @@ const ModalHistoria: React.FC<ModalProps> = ({
   handleSubmit,
   cerrarModal,
   error,
-  roles,
-  mascotas,
-}) => (
-  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-    <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg">
-      <h2 className="text-xl font-semibold mb-4 text-center">{titulo}</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <div className="bg-red-100 text-red-700 p-2 rounded-md text-center">
-            {error}
+  funcionarios,
+}) => {
+  console.log("🔍 Funcionarios en modal:", funcionarios);
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+      <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg">
+        <h2 className="text-xl font-semibold mb-4 text-center">{titulo}</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="bg-red-100 text-red-700 p-2 rounded-md text-center">
+              {error}
+            </div>
+          )}
+
+          <label className="block font-medium text-gray-700 mb-1">Fecha</label>
+          <input
+            type="date"
+            name="fecha"
+            value={formData.fecha}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
+            required
+          />
+
+          <label className="block font-medium text-gray-700 mb-1">
+            Descripción del procedimiento
+          </label>
+          <textarea
+            name="descripcion"
+            value={formData.descripcion}
+            onChange={handleChange}
+            rows={3}
+            placeholder="Describe el procedimiento realizado..."
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
+            required
+          />
+
+          {/* 🔹 Nombre del responsable (funcionario) */}
+          <label className="block font-medium text-gray-700 mb-1">
+            Nombre del responsable
+          </label>
+          <select
+            name="nombre_responsable"
+            value={formData.nombre_responsable}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
+            required
+          >
+            <option value="">Selecciona un funcionario</option>
+            {funcionarios.map((func) => (
+              <option key={func.id} value={func.nombre}>
+                {func.nombre}
+              </option>
+            ))}
+          </select>
+
+          {/* 🔹 Cargo (se llena automáticamente) */}
+          <label className="block font-medium text-gray-700 mb-1">Cargo</label>
+          <input
+            type="text"
+            name="cargo"
+            value={formData.cargo}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 focus:ring-green-200 focus:outline-none"
+            placeholder="Se llenará automáticamente al seleccionar el funcionario"
+            readOnly
+            required
+          />
+
+          {/* 🔹 Tipo de procedimiento */}
+          <label className="block font-medium text-gray-700 mb-1">
+            Tipo de procedimiento
+          </label>
+          <select
+            name="tipo"
+            value={formData.tipo}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
+            required
+          >
+            <option value="">Selecciona un tipo</option>
+            <option value="Vacunación">Vacunación</option>
+            <option value="Desparasitación">Desparasitación</option>
+            <option value="Control general">Control general</option>
+            <option value="Cirugía">Cirugía</option>
+            <option value="Esterilización">Esterilización</option>
+            <option value="Urgencia">Urgencia</option>
+            <option value="Otro">Otro</option>
+          </select>
+
+          <div className="flex justify-end gap-4 mt-6">
+            <button
+              type="button"
+              onClick={cerrarModal}
+              className="px-4 py-2 rounded-lg border border-gray-400 text-gray-600 hover:bg-gray-200 transition"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 rounded-lg bg-[#008658] text-white font-semibold hover:bg-green-700 transition"
+            >
+              Guardar
+            </button>
           </div>
-        )}
+        </form>
+      </div>
+    </div>
+  );
+};
 
-        <label className="block font-medium text-gray-700 mb-1">Fecha</label>
-        <input
-          type="date"
-          name="fecha"
-          value={formData.fecha}
-          onChange={handleChange}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
-          required
-        />
+/* ===========================
+   🔸 MODAL DE CONFIRMACIÓN
+=========================== */
+interface ModalConfirmacionProps {
+  tipo: "eliminar" | "actualizar";
+  confirmar: () => void;
+  cancelar: () => void;
+}
 
-        <label className="block font-medium text-gray-700 mb-1">
-          Descripción
-        </label>
-        <textarea
-          name="descripcion"
-          value={formData.descripcion}
-          onChange={handleChange}
-          rows={3}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
-          required
-        />
-
-        {/* 🔹 Nombre de mascota */}
-        <label className="block font-medium text-gray-700 mb-1">
-          Nombre de mascota
-        </label>
-        <select
-          name="nombre_responsable"
-          value={formData.nombre_responsable}
-          onChange={handleChange}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
-          required
+const ModalConfirmacion: React.FC<ModalConfirmacionProps> = ({
+  tipo,
+  confirmar,
+  cancelar,
+}) => (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="bg-white rounded-lg p-6 w-full max-w-sm text-center shadow-lg">
+      <AlertTriangle size={48} className="text-yellow-500 mx-auto mb-3" />
+      <h3 className="text-lg font-semibold mb-2">
+        {tipo === "eliminar"
+          ? "¿Deseas eliminar esta historia clínica?"
+          : "¿Deseas actualizar esta historia clínica?"}
+      </h3>
+      <div className="flex justify-center gap-4 mt-4">
+        <button
+          onClick={confirmar}
+          className="bg-[#008658] text-white px-4 py-2 rounded hover:bg-green-700"
         >
-          <option value="">Selecciona una mascota</option>
-          {mascotas.map((m) => (
-            <option key={m.id} value={m.nombre}>
-              {m.nombre}
-            </option>
-          ))}
-        </select>
-
-        {/* 🔹 Edad (rellenado automático) */}
-        <label className="block font-medium text-gray-700 mb-1">Edad</label>
-        <input
-          name="telefono"
-          value={formData.telefono}
-          onChange={handleChange}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
-          readOnly
-        />
-
-        <label className="block font-medium text-gray-700 mb-1">Cargo</label>
-        <select
-          name="cargo"
-          value={formData.cargo}
-          onChange={handleChange}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
-          required
+          Confirmar
+        </button>
+        <button
+          onClick={cancelar}
+          className="border border-gray-400 px-4 py-2 rounded"
         >
-          <option value="">Selecciona un tipo</option>
-          {roles.map((rol) => (
-            <option key={rol.id} value={rol.nombre}>
-              {rol.nombre}
-            </option>
-          ))}
-        </select>
-
-        <label className="block font-medium text-gray-700 mb-1">
-          Tipo de procedimiento
-        </label>
-        <select
-          name="tipo"
-          value={formData.tipo}
-          onChange={handleChange}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-green-200 focus:outline-none"
-          required
-        >
-          <option value="">Selecciona un tipo</option>
-          <option value="Vacunación">Vacunación</option>
-          <option value="Desparasitación">Desparasitación</option>
-          <option value="Control general">Control general</option>
-          <option value="Cirugía">Cirugía</option>
-          <option value="Esterilización">Esterilización</option>
-          <option value="Urgencia">Urgencia</option>
-          <option value="Otro">Otro</option>
-        </select>
-
-        <div className="flex justify-end gap-4 mt-6">
-          <button
-            type="button"
-            onClick={cerrarModal}
-            className="px-4 py-2 rounded-lg border border-gray-400 text-gray-600 hover:bg-gray-200 transition"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="px-6 py-2 rounded-lg bg-[#008658] text-white font-semibold hover:bg-green-700 transition"
-          >
-            Guardar
-          </button>
-        </div>
-      </form>
+          Cancelar
+        </button>
+      </div>
     </div>
   </div>
 );
 
+/* ===========================
+   🔸 MODAL DE ÉXITO
+=========================== */
+interface ModalExitoProps {
+  cerrarModal: () => void;
+}
+
+const ModalExito: React.FC<ModalExitoProps> = ({ cerrarModal }) => (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg text-center">
+      <CheckCircle2 size={48} className="text-green-600 mx-auto mb-3" />
+      <h3 className="text-lg font-semibold mb-2">¡Éxito!</h3>
+      <p className="mb-4">La historia clínica se ha procesado correctamente.</p>
+      <button
+        onClick={cerrarModal}
+        className="bg-[#008658] text-white px-4 py-2 rounded hover:bg-green-700"
+      >
+        Aceptar
+      </button>
+    </div>
+  </div>
+);

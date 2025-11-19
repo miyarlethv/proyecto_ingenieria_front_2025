@@ -1,10 +1,11 @@
 // imports
-import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Search, PlusCircle, Pencil, Trash2, CheckCircle2, X } from "lucide-react";
+import { apiFetch, tienePermiso } from "../api";
+import ModalError from "../components/ModalError";
+import { useModalError } from "../hooks/useModalError";
 
 function BienvenidaFundacion() {
-  const navigate = useNavigate();
   
   // Estados de la UI
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -14,6 +15,9 @@ function BienvenidaFundacion() {
   const [editandoMascota, setEditandoMascota] = useState<any | null>(null);
   const [confirmEliminar, setConfirmEliminar] = useState<any | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  
+  // Hook para modal de errores
+  const { modalError, mostrarError, cerrarError } = useModalError();
 
   // Mascotas
   const [mascotas, setMascotas] = useState<any[]>([]);
@@ -28,25 +32,11 @@ function BienvenidaFundacion() {
   
   const [busqueda, setBusqueda] = useState<string>("");
 
-  // Botón Volver
-  const manejarVolver = () => {
-    if (mostrarFormulario) {
-      setMostrarFormulario(false);
-      setEditandoMascota(null);
-      setNombre("");
-      setEdad("");
-      setCaracteristicas("");
-      setFoto(null);
-    } else {
-      navigate("/dashboard");
-    }
-  };
-
   // Cargar mascotas al inicio
   useEffect(() => {
     const fetchMascotas = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/mascotas");
+        const response = await apiFetch("mascotas");
         if (response.ok) {
           const data = await response.json();
           setMascotas(Array.isArray(data) ? data : data.data ?? []);
@@ -64,6 +54,10 @@ function BienvenidaFundacion() {
 
   // Abrir formulario en modo Agregar
   const abrirAgregar = () => {
+    if (!tienePermiso('CrearMascotas')) {
+      mostrarError("No tienes permiso para crear mascotas");
+      return;
+    }
     setEditandoMascota(null);
     setNombre("");
     setEdad("");
@@ -74,6 +68,10 @@ function BienvenidaFundacion() {
 
   // Abrir formulario en modo Editar
   const abrirEditar = (mascota: any) => {
+    if (!tienePermiso('ActualizarMascotas')) {
+      mostrarError("No tienes permiso para editar mascotas");
+      return;
+    }
     setEditandoMascota(mascota);
     setNombre(mascota.nombre ?? "");
     setEdad(String(mascota.edad ?? ""));
@@ -90,16 +88,14 @@ function BienvenidaFundacion() {
     try {
       if (editandoMascota) {
         // === actualizar ===
-        const url = 'http://127.0.0.1:8000/api/ActualizarMascotas';
         const formData = new FormData();
-        formData.append("id", editandoMascota.id); // Enviar el ID como parte del formData
+        formData.append("id", editandoMascota.id);
         formData.append("nombre", nombre);
         formData.append("edad", edad);
         formData.append("caracteristicas", caracteristicas);
         if (foto) formData.append("foto", foto);
-        formData.append("_method", "PUT");
 
-        const response = await fetch(url, { method: "POST", body: formData });
+        const response = await apiFetch("ActualizarMascotas", { method: "POST", body: formData });
 
         if (response.ok) {
           const updated = await response.json();
@@ -111,18 +107,18 @@ function BienvenidaFundacion() {
           setEditandoMascota(null);
           setMostrarModalExito(true);
         } else {
-          alert("Error al actualizar la mascota");
+          const errorData = await response.json().catch(() => ({}));
+          mostrarError(errorData.message || "Error al actualizar la mascota. Verifica que tengas los permisos necesarios.");
         }
       } else {
         // === crear ===
-        const url = `http://127.0.0.1:8000/api/CrearMascotas`;
         const formData = new FormData();
         formData.append("nombre", nombre);
         formData.append("edad", edad);
         formData.append("caracteristicas", caracteristicas);
         if (foto) formData.append("foto", foto);
 
-        const response = await fetch(url, { method: "POST", body: formData });
+        const response = await apiFetch("CrearMascotas", { method: "POST", body: formData });
 
         if (response.ok) {
           const nueva = await response.json();
@@ -131,12 +127,13 @@ function BienvenidaFundacion() {
           setMostrarFormulario(false);
           setMostrarModalExito(true);
         } else {
-          alert("Error al guardar la mascota");
+          const errorData = await response.json().catch(() => ({}));
+          mostrarError(errorData.message || "Error al guardar la mascota. Verifica que tengas los permisos necesarios.");
         }
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Hubo un problema con la conexión al servidor");
+      mostrarError("Hubo un problema con la conexión al servidor");
     } finally {
       setIsProcessing(false);
       setNombre("");
@@ -155,6 +152,10 @@ function BienvenidaFundacion() {
 
   // Eliminar
   const handleEliminarMascota = (id: number | string) => {
+    if (!tienePermiso('EliminarMascotas')) {
+      mostrarError("No tienes permiso para eliminar mascotas");
+      return;
+    }
     const mascota = mascotas.find((m) => String(m.id) === String(id));
     if (!mascota) {
       console.warn("Mascota no encontrada", id);
@@ -164,32 +165,40 @@ function BienvenidaFundacion() {
   };
 
   const confirmarEliminarMascota = async () => {
-  setIsProcessing(true);
-  try {
-    await fetch("http://127.0.0.1:8000/api/EliminarMascotas", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: confirmEliminar.id }),
-    });
+    setIsProcessing(true);
+    try {
+      const response = await apiFetch("EliminarMascotas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: confirmEliminar.id }),
+      });
 
-    // 🔹 Actualiza el estado local para quitar la mascota de la vista
-    setMascotas((prev) => prev.filter((m) => m.id !== confirmEliminar.id));
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error del backend:", errorData);
+        mostrarError(errorData.message || 'Error al eliminar. Verifica que tengas los permisos necesarios.');
+        setIsProcessing(false);
+        return;
+      }
 
-    setConfirmEliminar(null);
-  } catch (error) {
-    console.error("Error al deshabilitar la mascota:", error);
-  } finally {
-    setIsProcessing(false);
-  }
-};
+      // 🔹 Actualiza el estado local para quitar la mascota de la vista
+      setMascotas((prev) => prev.filter((m) => m.id !== confirmEliminar.id));
+
+      setConfirmEliminar(null);
+      console.log("✅ Mascota eliminada correctamente");
+    } catch (error) {
+      console.error("Error al eliminar la mascota:", error);
+      mostrarError("Error al conectar con el servidor");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-
+    <div className="w-full">
       {/* Barra búsqueda + Agregar */}
-      <div className="flex justify-between items-center max-w-7xl mx-auto px-4 mt-8 mb-6">
+      <div className="flex justify-between items-center mb-6 mt-4">
         <div className="relative w-1/3">
           <Search className="absolute inset-y-0 left-3 my-auto text-gray-400" size={20} />
           <input
@@ -207,12 +216,6 @@ function BienvenidaFundacion() {
           >
             <PlusCircle size={22} className="text-white" />
             <span>Agregar mascota</span>
-          </button>
-          <button
-            onClick={manejarVolver}
-            className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
-          >
-            Volver
           </button>
         </div>
       </div>
@@ -354,10 +357,10 @@ function BienvenidaFundacion() {
       )}
 
       {/* Lista mascotas */}
-      <section className="pb-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+      <section className="w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filtroMascotas.map((mascota) => (
-            <div key={mascota.id} className="flex flex-col items-center border border-gray-300 rounded-lg p-4 shadow-sm">
+            <div key={mascota.id} className="flex flex-col items-center bg-white border border-gray-300 rounded-lg p-4 shadow-md">
               {mascota.foto ? (
                 <img src={`http://127.0.0.1:8000/storage/${mascota.foto}`} alt={mascota.nombre} className="w-24 h-24 object-cover mb-3 rounded-full" />
               ) : (
@@ -384,6 +387,14 @@ function BienvenidaFundacion() {
           ))}
         </div>
       </section>
+
+      {/* Modal de error */}
+      <ModalError
+        mostrar={modalError.mostrar}
+        titulo={modalError.titulo}
+        mensaje={modalError.mensaje}
+        onCerrar={cerrarError}
+      />
     </div>
   );
 }
