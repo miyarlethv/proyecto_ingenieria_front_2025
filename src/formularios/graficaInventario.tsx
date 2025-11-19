@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Bar, Pie, Doughnut } from 'react-chartjs-2';
@@ -6,7 +5,7 @@ import { Bar, Pie, Doughnut } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 function GraficaInventario() {
-  const navigate = useNavigate();
+
 
   // Estados para inventario
   const [productosInventario, setProductosInventario] = useState<any[]>([]);
@@ -91,7 +90,7 @@ function GraficaInventario() {
     labels: productosBajoStock.map(prod => prod.nombre),
     datasets: [
       {
-        label: 'Stock Bajo (< 10 unidades)',
+        label: 'Stock Bajo (< 50 unidades)',
         data: productosBajoStock.map(prod => parseInt(prod.cantidad) || 0),
         backgroundColor: [
           'rgba(255, 99, 132, 0.6)',
@@ -125,19 +124,15 @@ function GraficaInventario() {
   // Calcular estadísticas
   const totalProductos = productosInventario.length;
   const totalCantidad = productosInventario.reduce((sum, prod) => sum + (parseInt(prod.cantidad) || 0), 0);
-  const productosMasStock = [...productosInventario].sort((a, b) => (parseInt(b.cantidad) || 0) - (parseInt(a.cantidad) || 0)).slice(0, 5);
+  
+  // ✅ Ordenar TODOS los productos por cantidad (de mayor a menor)
+  const productosOrdenados = [...productosInventario].sort((a, b) => (parseInt(b.cantidad) || 0) - (parseInt(a.cantidad) || 0));
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       {/* Header */}
       <header className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-[#008658]">Gráficas de Inventario</h1>
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
-        >
-          Volver
-        </button>
       </header>
 
       {/* Tarjetas de estadísticas */}
@@ -199,7 +194,7 @@ function GraficaInventario() {
         </div>
 
         <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-lg font-bold mb-4 text-[#008658]">Top 5 Productos con Mayor Stock</h2>
+          <h2 className="text-lg font-bold mb-4 text-[#008658]">Stock de Productos</h2>
           <div className="overflow-auto max-h-80">
             <table className="w-full">
               <thead className="bg-gray-100 sticky top-0">
@@ -210,8 +205,8 @@ function GraficaInventario() {
                 </tr>
               </thead>
               <tbody>
-                {productosMasStock.length > 0 ? (
-                  productosMasStock.map((prod, index) => (
+                {productosOrdenados.length > 0 ? (
+                  productosOrdenados.map((prod, index) => (
                     <tr key={index} className="border-b hover:bg-gray-50">
                       <td className="p-3 text-sm">{prod.nombre}</td>
                       <td className="p-3 text-sm">{prod.categoria}</td>

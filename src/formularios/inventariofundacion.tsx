@@ -19,7 +19,7 @@ interface Producto {
   foto?: string;
 }
 // ==================== IMPORTS ====================
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Search, PlusCircle, Pencil, Trash2, CheckCircle2 } from "lucide-react";
 import { tienePermiso, esFundacion } from "../api";
@@ -41,7 +41,7 @@ const apiFetch = (endpoint: string, options: RequestInit = {}) => {
 };
 
 function InventarioFundacion() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { modalError, mostrarError, cerrarError } = useModalError();
   // ==================== ESTADOS ====================
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -113,18 +113,18 @@ function InventarioFundacion() {
     );
 
     // ==================== HANDLERS ====================
-    const manejarVolver = () => {
-      if (mostrarFormulario) {
-        setMostrarFormulario(false);
-        setEditandoProducto(null);
-        setCategoriaId("");
-        setNombreId("");
-        setCantidad("");
-        setFoto(null);
-      } else {
-        navigate("/dashboard");
-      }
-    };
+    // const manejarVolver = () => {
+    //   if (mostrarFormulario) {
+    //     setMostrarFormulario(false);
+    //     setEditandoProducto(null);
+    //     setCategoriaId("");
+    //     setNombreId("");
+    //     setCantidad("");
+    //     setFoto(null);
+    //   } else {
+    //     navigate("/dashboard");
+    //   }
+    // };
     const abrirAgregar = () => {
       if (!puedeGestionarInventario()) {
         mostrarError("No tienes permiso para agregar productos");
@@ -253,12 +253,12 @@ function InventarioFundacion() {
                 <span>Agregar Producto</span>
               </button>
             )}
-            <button
+            {/* <button
               onClick={manejarVolver}
               className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
             >
               Volver
-            </button>
+            </button> */}
           </div>
         </div>
 

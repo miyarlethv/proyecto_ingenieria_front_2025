@@ -1,10 +1,12 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { esFundacion, obtenerNombre } from "../api";
 import { Users, Dog, ChartPie } from "lucide-react";
 
 function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
+  // Mock temporal para evitar error de compilación
+  const esFundacion = () => false;
+  const obtenerNombre = () => "";
   const esAdmin = esFundacion();
   const nombreUsuario = obtenerNombre() || location.state?.nombre || "Usuario";
 

@@ -10,7 +10,7 @@ interface Producto {
   categoria_id: number;
   categoria: string;
 }
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Search, PlusCircle, Pencil, Trash2, CheckCircle2 } from "lucide-react";
 import { tienePermiso, esFundacion } from "../api";
@@ -34,7 +34,7 @@ const apiFetch = (endpoint: string, options: RequestInit = {}) => {
 };
 
 function Categorias() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { modalError, mostrarError, cerrarError } = useModalError();
 
   // ==================== ESTADOS ====================
@@ -96,17 +96,17 @@ function Categorias() {
   );
 
   // ==================== HANDLERS - NAVEGACIÓN ====================
-  const manejarVolver = (): void => {
-    if (mostrarFormulario) {
-      setMostrarFormulario(false);
-      setEditandoItem(null);
-      setCategoria("");
-      setNombre("");
-      setCategoriaId("");
-    } else {
-      navigate("/dashboard");
-    }
-  };
+  // const manejarVolver = (): void => {
+  //   if (mostrarFormulario) {
+  //     setMostrarFormulario(false);
+  //     setEditandoItem(null);
+  //     setCategoria("");
+  //     setNombre("");
+  //     setCategoriaId("");
+  //   } else {
+  //     navigate("/dashboard");
+  //   }
+  // };
 
   // ==================== HANDLERS - AGREGAR ====================
   const abrirAgregarCategoria = (): void => {
@@ -290,7 +290,7 @@ function Categorias() {
   // ==================== RENDER ====================
   return (
     <div className="w-full">
-      {/* BARRA DE BÚSQUEDA Y BOTÓN VOLVER */}
+      {/* BARRA DE BÚSQUEDA */}
       <div className="flex justify-between items-center mb-6 mt-4">
         <div className="relative w-1/3">
           <Search className="absolute inset-y-0 left-3 my-auto text-gray-400" size={20} />
@@ -322,12 +322,12 @@ function Categorias() {
               </button>
             </>
           )}
-          <button
+          {/* <button
             onClick={manejarVolver}
             className="flex items-center gap-2 bg-[#008658] text-white px-5 py-2 rounded-xl shadow hover:bg-green-700 transition"
           >
             Volver
-          </button>
+          </button> */}
         </div>
       </div>
 
