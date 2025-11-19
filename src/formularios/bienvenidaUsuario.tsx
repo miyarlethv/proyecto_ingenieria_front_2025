@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Search, X, CheckCircle2, Bell } from "lucide-react";
 import { apiFetch } from "../api";
 import type { Notificacion } from "../types/Notificacion";
-
+import logoIndex from "../assets/LogoIndex.jpg";
 
 function BienvenidoUsuario() {
   const navigate = useNavigate();
@@ -167,16 +167,17 @@ function BienvenidoUsuario() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Banner de notificaciones eliminado. Las notificaciones solo se muestran en el modal al hacer clic en la campana. */}
-
+      {/* ========== HEADER CON LOGO ========== */}
       <header className="bg-[#008658] flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gray-200" />
+          {/* Logo de la aplicación (igual que en index.tsx) */}
+          <img src={logoIndex} alt="Logo" className="w-12 h-12 rounded-full" />
           <h1 className="text-lg font-bold text-white">
             Bienvenido Usuario ({nombreUsuario})
           </h1>
         </div>
         <div className="flex items-center gap-4">
+          {/* Campana de notificaciones */}
           <div className="relative">
             <button
               onClick={() => setMostrarModalNotificaciones((v) => !v)}
@@ -189,6 +190,7 @@ function BienvenidoUsuario() {
                 </span>
               )}
             </button>
+            
             {/* Dropdown de notificaciones */}
             {mostrarModalNotificaciones && (
               <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-300 rounded-lg shadow-lg z-50">
@@ -199,7 +201,7 @@ function BienvenidoUsuario() {
                     className="p-2 text-gray-500 hover:text-black"
                     title="Cerrar"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M6 6l12 12M6 18L18 6"/></svg>
+                    <X size={20} />
                   </button>
                 </div>
                 {notificaciones.length === 0 ? (
@@ -218,7 +220,7 @@ function BienvenidoUsuario() {
                             onClick={() => handleCerrarNotificacion(n.id)}
                             title="Marcar como leída"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
+                            <CheckCircle2 size={20} />
                           </button>
                         )}
                       </li>
@@ -228,6 +230,7 @@ function BienvenidoUsuario() {
               </div>
             )}
           </div>
+          
           <button
             onClick={manejarVolver}
             className="bg-white text-[#008658] border border-[#008658] px-4 py-2 rounded-xl font-medium hover:bg-[#a0a8a5] hover:text-white transition shadow"
@@ -237,13 +240,10 @@ function BienvenidoUsuario() {
         </div>
       </header>
 
-      {/* Buscador */}
+      {/* ========== BUSCADOR ========== */}
       <div className="flex justify-between items-center max-w-7xl mx-auto px-4 mt-8 mb-6">
         <div className="relative w-1/3">
-          <Search
-            className="absolute inset-y-0 left-3 my-auto text-gray-400"
-            size={20}
-          />
+          <Search className="absolute inset-y-0 left-3 my-auto text-gray-400" size={20} />
           <input
             type="text"
             placeholder="Buscar mascota..."
@@ -254,61 +254,68 @@ function BienvenidoUsuario() {
         </div>
       </div>
 
-      {/* Modal ver más mascota */}
+      {/* ========== MODAL: VER MÁS MASCOTA ========== */}
       {mascotaSeleccionada && !mostrarFormularioAdopcion && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg p-6 w-96 text-center shadow-lg relative">
+          <div className="bg-white rounded-lg p-6 w-96 shadow-lg relative">
             <button
               onClick={() => setMascotaSeleccionada(null)}
-              className="absolute top-2 right-2 text-gray-600 hover:text-black"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Cerrar"
             >
-              <X size={20} />
+              <X size={24} />
             </button>
-            {mascotaSeleccionada.foto && (
-              <img
-                src={`http://127.0.0.1:8000/storage/${mascotaSeleccionada.foto}`}
-                alt={mascotaSeleccionada.nombre}
-                className="w-32 h-32 object-cover mx-auto rounded-full mb-4"
-              />
-            )}
-            <h2 className="text-xl font-bold">{mascotaSeleccionada.nombre}</h2>
-            <p className="text-black-700 mt-2">Edad: {mascotaSeleccionada.edad}</p>
-            <p className="text-black-700 mt-2">
-              Características: {mascotaSeleccionada.caracteristicas || "No registradas"}
-            </p>
-            <button
-              onClick={abrirFormularioAdopcion}
-              className="mt-4 bg-[#008658] text-white px-6 py-2 rounded-lg hover:bg-[#006f49] transition font-semibold"
-            >
-              Adoptar
-            </button>
+            
+            <div className="text-center pt-2">
+              {mascotaSeleccionada.foto && (
+                <img
+                  src={`http://127.0.0.1:8000/storage/${mascotaSeleccionada.foto}`}
+                  alt={mascotaSeleccionada.nombre}
+                  className="w-32 h-32 object-cover mx-auto rounded-full mb-4"
+                />
+              )}
+              <h2 className="text-xl font-bold mb-3">{mascotaSeleccionada.nombre}</h2>
+              <p className="text-gray-700 mb-2">
+                <span className="font-semibold">Edad:</span> {mascotaSeleccionada.edad}
+              </p>
+              <p className="text-gray-700 mb-4">
+                <span className="font-semibold">Características:</span>{" "}
+                {mascotaSeleccionada.caracteristicas || "No registradas"}
+              </p>
+              <button
+                onClick={abrirFormularioAdopcion}
+                className="w-full bg-[#008658] text-white px-6 py-2 rounded-lg hover:bg-[#006f49] transition font-semibold"
+              >
+                Adoptar
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Formulario de adopción */}
+      {/* ========== MODAL: FORMULARIO DE ADOPCIÓN ========== */}
       {mostrarFormularioAdopcion && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-3xl shadow-lg relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={cerrarFormularioAdopcion}
-              className="absolute top-4 right-4 text-gray-600 hover:text-black"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Cerrar"
             >
               <X size={24} />
             </button>
-            <h2 className="text-2xl font-bold text-[#008658] mb-2 text-center">
+            
+            <h2 className="text-2xl font-bold text-[#008658] mb-2 text-center pt-2">
               Formulario de Adopción
             </h2>
             <p className="text-center text-gray-600 mb-6">
-              Adoptar a: <span className="font-semibold">{mascotaSeleccionada.nombre}</span>
+              Adoptar a: <span className="font-semibold">{mascotaSeleccionada?.nombre}</span>
             </p>
+            
             <form onSubmit={enviarSolicitudAdopcion} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Edad */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Edad *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Edad *</label>
                   <input
                     type="number"
                     name="edad"
@@ -319,11 +326,9 @@ function BienvenidoUsuario() {
                     required
                   />
                 </div>
-                {/* Ciudad */}
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ciudad *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad *</label>
                   <input
                     type="text"
                     name="ciudad"
@@ -334,11 +339,9 @@ function BienvenidoUsuario() {
                     required
                   />
                 </div>
-                {/* Ocupación */}
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ocupación *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ocupación *</label>
                   <input
                     type="text"
                     name="ocupacion"
@@ -349,11 +352,9 @@ function BienvenidoUsuario() {
                     required
                   />
                 </div>
-                {/* Estrato */}
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Estrato *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Estrato *</label>
                   <input
                     type="number"
                     name="estrato"
@@ -366,11 +367,9 @@ function BienvenidoUsuario() {
                     required
                   />
                 </div>
-                {/* Tiene hijos */}
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    ¿Tiene hijos? *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">¿Tiene hijos? *</label>
                   <select
                     name="tieneHijos"
                     value={datosAdopcion.tieneHijos}
@@ -383,7 +382,7 @@ function BienvenidoUsuario() {
                     <option value="no">No</option>
                   </select>
                 </div>
-                {/* Número de personas */}
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Número de personas en el hogar *
@@ -400,7 +399,7 @@ function BienvenidoUsuario() {
                   />
                 </div>
               </div>
-              {/* Acepta visitas */}
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   ¿Acepta visitas o seguimiento? *
@@ -417,7 +416,7 @@ function BienvenidoUsuario() {
                   <option value="no">No</option>
                 </select>
               </div>
-              {/* Botones */}
+              
               <div className="flex gap-3 justify-end mt-6">
                 <button
                   type="button"
@@ -438,18 +437,16 @@ function BienvenidoUsuario() {
         </div>
       )}
 
-      {/* Modal Éxito */}
+      {/* ========== MODAL: ÉXITO ========== */}
       {mostrarModalExito && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg text-center">
+          <div className="bg-white rounded-lg p-8 w-full max-w-sm shadow-lg text-center">
             <CheckCircle2 size={48} className="text-green-600 mx-auto mb-3" />
             <h3 className="text-lg font-semibold mb-2">¡Éxito!</h3>
-            <p className="mb-4">
-              Tu solicitud de adopción se ha enviado correctamente.
-            </p>
+            <p className="mb-4">Tu solicitud de adopción se ha enviado correctamente.</p>
             <button
               onClick={() => setMostrarModalExito(false)}
-              className="bg-[#008658] text-white px-4 py-2 rounded hover:bg-[#006f49] transition"
+              className="bg-[#008658] text-white px-6 py-2 rounded hover:bg-[#006f49] transition"
             >
               Aceptar
             </button>
@@ -457,29 +454,50 @@ function BienvenidoUsuario() {
         </div>
       )}
 
-      {/* Modal Error */}
+      {/* ========== MODAL: ERROR ========== */}
       {mostrarModalError && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg text-center">
-            <X size={48} className="text-red-600 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold mb-2">Error</h3>
-            <p className="mb-4 text-gray-700">{mensajeError}</p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 relative">
+            {/* Botón X en la esquina superior derecha */}
             <button
-          onClick={() => setMostrarModalNotificaciones(true)}
-          className="relative bg-white text-[#008658] border border-[#008658] px-3 py-2 rounded-full hover:bg-[#a0a8a5] hover:text-white transition shadow"
-        >
-          <Bell size={24} />
-          {notificaciones.filter(n => !n.read).length > 0 && (
-            <span className="absolute top-1 right-1 bg-red-500 text-white rounded-full text-xs px-2 py-0.5">
-              {notificaciones.filter(n => !n.read).length}
-            </span>
-          )}
-        </button>
+              onClick={() => setMostrarModalError(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
+              aria-label="Cerrar"
+            >
+              <X size={24} />
+            </button>
+
+            {/* Contenido del modal */}
+            <div className="text-center pt-2">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg
+                  className="w-8 h-8 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Error</h3>
+              <p className="text-gray-600 mb-6">{mensajeError}</p>
+              <button
+                onClick={() => setMostrarModalError(false)}
+                className="w-full bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Lista mascotas */}
+      {/* ========== LISTA DE MASCOTAS ========== */}
       <section className="pb-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           {mascotasFiltradas.length > 0 ? (
