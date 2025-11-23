@@ -182,7 +182,7 @@ function Index() {
                     {mascota.edad ?? "-"}
                   </p>
                   <button 
-                    onClick={() => navigate('/registro')}
+                    onClick={() => navigate('/login')}
                     className="border border-green-600 px-3 py-1 text-sm hover:bg-gray-100 rounded-[10px] w-full mb-2"
                   >
                     Ver más..
