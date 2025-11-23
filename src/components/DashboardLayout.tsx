@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { Home, Users, Dog, NotebookPen, UserPlus, Shield, Package, Heart, ClipboardList, Key, AlertTriangle, X } from "lucide-react";
 import { obtenerNombre, esFundacion, tienePermiso, logout } from "../api";
@@ -19,6 +19,80 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
     mostrar: false,
     mensaje: ""
   });
+
+  // Estado para el logo de la fundación
+  const [logoFundacion, setLogoFundacion] = useState<string | null>(null);
+  const [nombreFundacion, setNombreFundacion] = useState<string>("");
+
+  // Obtener datos de la fundación
+  useEffect(() => {
+    const obtenerDatosFundacion = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const fundacionId = localStorage.getItem("fundacion_id");
+        
+        console.log("fundacion_id desde localStorage:", fundacionId);
+        
+        // Obtener todas las fundaciones (temporalmente mientras arreglamos el backend)
+        const url = "http://127.0.0.1:8000/api/Fundacion";
+        
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        console.log("Respuesta API:", response.status);
+        console.log("URL llamada:", url);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Datos completos de la API:", data);
+          
+          // Buscar la fundación por ID si existe, sino tomar la primera
+          let fundacion;
+          if (Array.isArray(data)) {
+            console.log("Total de fundaciones:", data.length);
+            if (fundacionId) {
+              console.log("Buscando fundación con ID:", fundacionId);
+              fundacion = data.find(f => f.id === parseInt(fundacionId));
+              console.log("Fundación encontrada por ID:", fundacion);
+            }
+            if (!fundacion) {
+              console.log("No se encontró por ID, tomando la primera");
+              fundacion = data[0];
+            }
+          } else {
+            fundacion = data;
+          }
+          
+          console.log("Fundación seleccionada:", fundacion);
+          console.log("ID de la fundación seleccionada:", fundacion?.id);
+          console.log("Nombre de la fundación seleccionada:", fundacion?.nombre);
+          console.log("Logo fundación:", fundacion?.logo);
+          
+          if (fundacion) {
+            setNombreFundacion(fundacion.nombre || "");
+            if (fundacion.logo) {
+              const urlLogo = `http://127.0.0.1:8000/storage/${fundacion.logo}`;
+              console.log("URL del logo:", urlLogo);
+              setLogoFundacion(urlLogo);
+            } else {
+              console.log("La fundación no tiene logo registrado");
+            }
+          }
+        } else {
+          console.error("Error en la respuesta:", response.status);
+        }
+      } catch (error) {
+        console.error("Error al obtener datos de la fundación:", error);
+      }
+    };
+
+    if (esAdmin) {
+      obtenerDatosFundacion();
+    }
+  }, [esAdmin]);
 
   // Función para verificar si una opción está habilitada
   const estaHabilitado = (permiso: string) => {
@@ -141,9 +215,22 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Sidebar */}
       <aside className="w-64 bg-[#008658] text-white flex flex-col h-screen fixed left-0 top-0 bottom-0 z-10">
         <div className="flex items-center gap-3 p-4 border-b border-gray-700">
-          <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center font-bold text-lg">
-            {nombreUsuario.charAt(0).toUpperCase()}
-          </div>
+          {/* Logo de la fundación o inicial del usuario */}
+          {logoFundacion ? (
+            <img
+              src={logoFundacion}
+              alt={nombreFundacion}
+              className="w-10 h-10 rounded-full object-cover border-2 border-white"
+              onError={() => {
+                console.error("Error al cargar la imagen:", logoFundacion);
+                setLogoFundacion(null);
+              }}
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center font-bold text-lg">
+              {nombreUsuario.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div>
             <div className="font-semibold text-sm">{nombreUsuario}</div>
             <div className="text-xs text-gray-300">

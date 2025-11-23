@@ -90,14 +90,21 @@ export function guardarLogin(data: any): void {
   if (data.tipo === 'fundacion') {
     // Fundación tiene todos los permisos
     localStorage.setItem('permisos', 'all');
+    if (data.fundacion_id) {
+      localStorage.setItem('fundacion_id', data.fundacion_id.toString());
+    }
   } else if (data.tipo === 'funcionario') {
     // Funcionario tiene permisos específicos
     localStorage.setItem('permisos', JSON.stringify(data.permisos || []));
     localStorage.setItem('roles', JSON.stringify(data.roles || []));
+    if (data.fundacion_id) {
+      localStorage.setItem('fundacion_id', data.fundacion_id.toString());
+    }
   } else {
     // Persona no tiene permisos administrativos
     localStorage.removeItem('permisos');
     localStorage.removeItem('roles');
+    localStorage.removeItem('fundacion_id');
   }
 }
 

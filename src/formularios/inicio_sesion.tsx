@@ -23,7 +23,7 @@ function Login() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setLoginData((prev) => ({ ...prev, [name]: value }));
-    setError(""); // Limpiar error al escribir
+    setError("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,16 +32,16 @@ function Login() {
     setCargando(true);
 
     try {
-      console.log("🔍 Intentando login con:", loginData.email); // Debug
+      console.log("🔍 Intentando login con:", loginData.email);
       
-      const response = await apiFetch("login", { // ✅ Sin slash, sin barra inicial
+      const response = await apiFetch("login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginData),
       });
 
-      console.log("📡 Response status:", response.status); // Debug
-      console.log("📡 Response headers:", response.headers); // Debug
+      console.log("📡 Response status:", response.status);
+      console.log("📡 Response headers:", response.headers);
 
       const data = await response.json();
 
@@ -53,10 +53,8 @@ function Login() {
 
       console.log("✅ Login exitoso:", data);
 
-      // 🔥 Guardar token y permisos en localStorage
       guardarLogin(data);
 
-      // Redirigir según tipo de usuario
       if (data.tipo === "persona") {
         navigate("/bienvenidaUsuario", { 
           state: { nombre: data.nombre }, 
@@ -87,13 +85,12 @@ function Login() {
     navigate("/");
   };
 
-  // const recuperarContraseña = () => {
-  //   navigate("/recuperar-contraseña");
-  // };
+  const irARegistro = () => {
+    navigate("/registro");
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#EEEEEE] px-4">
-      {/* Botón Volver */}
       <button
         onClick={volverInicio}
         className="absolute top-4 right-4 bg-[#008658] text-white border border-[#008658] px-4 py-2 rounded-xl font-medium hover:bg-[#006f49] transition shadow"
@@ -101,7 +98,6 @@ function Login() {
         Volver
       </button>
 
-      {/* Formulario */}
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm bg-gradient-to-br from-[#ffffff] to-[#ffffff] backdrop-blur-md text-black rounded-2xl shadow-2xl p-8 space-y-6"
@@ -123,10 +119,9 @@ function Login() {
         </div>
 
         <p className="text-center text-lg font-medium text-black tracking-wide">
-          Bienvenido. Ingresa tus credenciales
+          Bienvenido, ingresa tus credenciales
         </p>
 
-        {/* Mensaje de error */}
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl text-sm">
             {error}
@@ -165,18 +160,6 @@ function Login() {
           </button>
         </div>
 
-        {/* Enlace recuperar contraseña */}
-        {/* <div className="text-right">
-          <button
-            type="button"
-            onClick={recuperarContraseña}
-            className="text-sm text-[#008658] hover:underline"
-            disabled={cargando}
-          >
-            ¿Olvidaste tu contraseña?
-          </button>
-        </div> */}
-
         <button
           type="submit"
           className="w-full py-2 bg-[#008658] text-[#ffffff] font-semibold rounded-xl hover:bg-[#006f49] transition shadow disabled:opacity-50 disabled:cursor-not-allowed"
@@ -184,6 +167,20 @@ function Login() {
         >
           {cargando ? "Iniciando sesión..." : "Iniciar sesión"}
         </button>
+
+        <div className="text-center">
+          <p className="text-sm text-gray-600">
+            ¿No tienes una cuenta?{" "}
+            <button
+              type="button"
+              onClick={irARegistro}
+              className="text-[#008658] font-semibold hover:underline"
+              disabled={cargando}
+            >
+              Regístrate aquí
+            </button>
+          </p>
+        </div>
       </form>
     </div>
   );
