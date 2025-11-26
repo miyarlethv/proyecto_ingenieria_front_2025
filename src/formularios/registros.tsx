@@ -61,11 +61,11 @@ function RegistroFormulario() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData(prev => ({ ...prev, logo: e.target.files![0] }));
-    }
-  };
+  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (e.target.files && e.target.files[0]) {
+  //     setFormData(prev => ({ ...prev, logo: e.target.files![0] }));
+  //   }
+  // };
 
   const handleTipoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value as "usuario" | "fundacion";
@@ -166,7 +166,7 @@ function RegistroFormulario() {
           className="w-full px-4 py-2 rounded-xl border border-[#008658] bg-white text-black shadow-sm"
         >
           <option value="usuario">Usuario</option>
-          <option value="fundacion">Fundación</option>
+          {/* <option value="fundacion">Fundación</option> */}
         </select>
 
         <input
@@ -238,7 +238,7 @@ function RegistroFormulario() {
           </button>
         </div>
 
-        {formularioElegido === "fundacion" && (
+        {/* {formularioElegido === "fundacion" && (
           <>
             <textarea
               name="slogan"
@@ -258,7 +258,7 @@ function RegistroFormulario() {
               required
             />
           </>
-        )}
+        )} */}
 
         <button
           type="submit"
